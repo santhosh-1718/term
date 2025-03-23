@@ -1,5 +1,18 @@
 let currentDirHandle;
 
+// Check if the browser supports the File System Access API
+if (!('showDirectoryPicker' in window)) {
+    document.getElementById('output').innerHTML = `
+        <div style="color: red;">
+            Error: Your browser does not support the File System Access API.
+            Please use Google Chrome or Microsoft Edge to access this application.
+        </div>
+    `;
+    document.getElementById('input').disabled = true;
+    document.getElementById('refresh-file-manager').disabled = true;
+    document.getElementById('back-button').disabled = true;
+}
+
 // Function to handle terminal commands
 async function handleCommand(command) {
     const output = document.getElementById('output');
