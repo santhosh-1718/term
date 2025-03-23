@@ -1,0 +1,90 @@
+body {
+  background-color: black;
+  color: limegreen;
+  font-family: monospace;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#terminal {
+  width: 95%;
+  height: 45%;
+  border: 2px solid limegreen;
+  padding: 10px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+#output {
+  white-space: pre-wrap;
+}
+
+#input-line {
+  display: flex;
+}
+
+#prompt {
+  margin-right: 5px;
+  color: white;
+}
+
+#input {
+  background: none;
+  border: none;
+  color: limegreen;
+  outline: none;
+  flex-grow: 1;
+}
+
+#file-manager {
+  width: 95%;
+  height: 45%;
+  border: 2px solid limegreen;
+  padding: 10px;
+  box-sizing: border-box;
+  margin-top: 10px;
+  background-color: black;
+  color: limegreen;
+  font-family: monospace;
+  overflow-y: auto;
+}
+
+#file-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#file-manager-content {
+  white-space: pre-wrap;
+}
+
+#refresh-file-manager, #back-button {
+  background-color: limegreen;
+  color: black;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+#refresh-file-manager:hover, #back-button:hover {
+  background-color: green;
+}
+
+.file-manager-item {
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+}
+
+.file-manager-item:hover {
+  background-color: limegreen;
+  color: black;
+}
