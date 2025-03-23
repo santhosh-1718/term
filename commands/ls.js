@@ -7,3 +7,4 @@ export async function execute(args, currentDirHandle) {
     }
     return files.join('\n');
 }
+
