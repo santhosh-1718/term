@@ -193,53 +193,88 @@ async function extractStrings(fileName) {
     }
 }
 
-// Function to refresh the file manager
+// Function to select a directory
+async function selectDirectory() {
+    try {
+        currentDirHandle = await window.showDirectoryPicker();
+        previousDirHandles = []; // Reset back history
+        refreshFileManager();
+    } catch (err) {
+        alert(`Error: ${err.message}`);
+    }
+}
+
+// Function to get file type icon
+function getFileIcon(name, kind) {
+    if (kind === 'directory') return '📁';
+    const ext = name.split('.').pop().toLowerCase();
+    const icons = {
+        'txt': '📝', 'md': '📖', 'html': '🌐', 'css': '🎨', 'js': '📜',
+        'py': '🐍', 'json': '🔢', 'jpg': '🖼️', 'png': '🖼️', 'gif': '🎞️',
+        'zip': '📦', 'rar': '📦', 'tar': '📦', 'mp4': '🎥', 'mp3': '🎵'
+    };
+    return icons[ext] || '📄';
+}
+
+// Function to refresh file manager
 async function refreshFileManager() {
     const fileManagerContent = document.getElementById('file-manager-content');
+    const currentDirDisplay = document.getElementById('current-directory');
     fileManagerContent.innerHTML = '';
 
     if (!currentDirHandle) {
-        fileManagerContent.textContent = 'No directory selected. Use `cd` to select a directory.';
+        fileManagerContent.textContent = 'No directory selected. Click "Select Directory" to choose a folder.';
         return;
     }
 
-    // Display the current directory
-    const currentDirElement = document.createElement('div');
-    currentDirElement.textContent = `Current Directory: ${currentDirPath}`;
-    currentDirElement.style.fontWeight = 'bold';
-    fileManagerContent.appendChild(currentDirElement);
+    // Update current directory display
+    currentDirDisplay.textContent = `Current Directory: ${currentDirHandle.name}`;
 
-    // Display files and folders
+    let folders = [];
+    let files = [];
+    let hiddenFiles = [];
+
     for await (const entry of currentDirHandle.values()) {
+        if (entry.kind === 'directory') {
+            folders.push(entry);
+        } else if (entry.name.startsWith('.')) {
+            hiddenFiles.push(entry);
+        } else {
+            files.push(entry);
+        }
+    }
+
+    // Sort alphabetically
+    folders.sort((a, b) => a.name.localeCompare(b.name));
+    files.sort((a, b) => a.name.localeCompare(b.name));
+    hiddenFiles.sort((a, b) => a.name.localeCompare(b.name));
+
+    const sortedEntries = [...folders, ...files, ...hiddenFiles];
+
+    sortedEntries.forEach(entry => {
         const item = document.createElement('div');
         item.className = 'file-manager-item';
-
-        const icon = document.createElement('i');
-        icon.className = entry.kind === 'directory' ? 'fas fa-folder folder-icon' : 'fas fa-file file-icon';
-        item.appendChild(icon);
-
-        const name = document.createElement('span');
-        name.textContent = entry.name;
-        item.appendChild(name);
-
-        // Add double-click event to open files and folders
-        item.addEventListener('dblclick', async () => {
-            if (entry.kind === 'directory') {
+        item.innerHTML = `<span class='file-icon' style='font-size: 25px; margin-right: 25px;'>${getFileIcon(entry.name, entry.kind)}</span> ${entry.name}`;
+        
+        if (entry.kind === 'directory') {
+            item.addEventListener('dblclick', async () => {
                 previousDirHandles.push(currentDirHandle);
                 currentDirHandle = await currentDirHandle.getDirectoryHandle(entry.name);
-                currentDirPath = entry.name;
                 refreshFileManager();
-            } else {
-                const fileHandle = await currentDirHandle.getFileHandle(entry.name);
-                const file = await fileHandle.getFile();
-                const content = await file.text();
-                document.getElementById('editor-content').value = content;
-                document.getElementById('editor').classList.remove('hidden');
-            }
-        });
-
+            });
+        }
         fileManagerContent.appendChild(item);
-    }
+    });
+}
+
+// Function to go back in directory
+async function goBack() {
+    if (previousDirHandles.length > 0) {
+        currentDirHandle = previousDirHandles.pop();
+        refreshFileManager();
+    } else {
+        alert('Already at the root directory.');
+    } 
 }
 
 // Add event listeners
@@ -250,24 +285,8 @@ document.getElementById('input').addEventListener('keydown', function (event) {
     }
 });
 
-document.getElementById('select-directory').addEventListener('click', async () => {
-    try {
-        currentDirHandle = await window.showDirectoryPicker();
-        currentDirPath = currentDirHandle.name;
-        refreshFileManager();
-    } catch (err) {
-        alert(`Error: ${err.message}`);
-    }
-});
+document.getElementById('select-directory').addEventListener('click', selectDirectory);
 
-document.getElementById('back-button').addEventListener('click', async () => {
-    if (previousDirHandles.length > 0) {
-        currentDirHandle = previousDirHandles.pop();
-        currentDirPath = currentDirHandle.name;
-        refreshFileManager();
-    } else {
-        alert('Already at the root directory.');
-    }
-});
+document.getElementById('back-button').addEventListener('click', goBack);
 
 document.getElementById('refresh-file-manager').addEventListener('click', refreshFileManager);
