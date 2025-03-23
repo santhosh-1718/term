@@ -1,158 +1,158 @@
 body {
-  background-color: black;
-  color: limegreen;
-  font-family: monospace;
-  margin: 0;
-  padding: 0;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+    background-color: black;
+    color: limegreen;
+    font-family: monospace;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 #terminal {
-  width: 95%;
-  height: 45%;
-  border: 2px solid limegreen;
-  padding: 10px;
-  box-sizing: border-box;
-  overflow-y: auto;
+    width: 95%;
+    height: 45%;
+    border: 2px solid limegreen;
+    padding: 10px;
+    box-sizing: border-box;
+    overflow-y: auto;
 }
 
 #output {
-  white-space: pre-wrap;
+    white-space: pre-wrap;
 }
 
 #input-line {
-  display: flex;
+    display: flex;
 }
 
 #prompt {
-  margin-right: 5px;
-  color: white;
+    margin-right: 5px;
+    color: white;
 }
 
 #input {
-  background: none;
-  border: none;
-  color: limegreen;
-  outline: none;
-  flex-grow: 1;
+    background: none;
+    border: none;
+    color: limegreen;
+    outline: none;
+    flex-grow: 1;
 }
 
 #file-manager {
-  width: 95%;
-  height: 45%;
-  border: 2px solid limegreen;
-  padding: 10px;
-  box-sizing: border-box;
-  margin-top: 10px;
-  background-color: black;
-  color: limegreen;
-  font-family: monospace;
-  overflow-y: auto;
+    width: 95%;
+    height: 45%;
+    border: 2px solid limegreen;
+    padding: 10px;
+    box-sizing: border-box;
+    margin-top: 10px;
+    background-color: black;
+    color: limegreen;
+    font-family: monospace;
+    overflow-y: auto;
 }
 
 #file-manager-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
 }
 
 #file-manager-content {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
 }
 
 #select-directory, #refresh-file-manager, #back-button {
-  background-color: limegreen;
-  color: black;
-  border: none;
-  padding: 5px 10px;
-  cursor: pointer;
+    background-color: limegreen;
+    color: black;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
 }
 
 #select-directory:hover, #refresh-file-manager:hover, #back-button:hover {
-  background-color: green;
+    background-color: green;
 }
 
 .file-manager-item {
-  cursor: pointer;
-  padding: 5px;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  width: 100px;
-  text-align: center;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    width: 100px;
+    text-align: center;
 }
 
 .file-manager-item:hover {
-  background-color: limegreen;
-  color: black;
+    background-color: limegreen;
+    color: black;
 }
 
 .file-icon {
-  font-size: 24px;
-  margin-bottom: 5px;
+    font-size: 24px;
+    margin-bottom: 5px;
 }
 
 .folder-icon {
-  color: #ffcc00;
+    color: #ffcc00;
 }
 
 .file-icon {
-  color: #00ccff;
+    color: #00ccff;
 }
 
-#image-preview, #media-preview {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: black;
-  border: 2px solid limegreen;
-  padding: 10px;
-  z-index: 1000;
+#image-preview, #iframe-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: black;
+    border: 2px solid limegreen;
+    padding: 10px;
+    z-index: 1000;
 }
 
-#preview-image, #media-iframe {
-  max-width: 90vw;
-  max-height: 90vh;
+#preview-image, #preview-iframe {
+    max-width: 90vw;
+    max-height: 90vh;
 }
 
-#close-preview, #close-media {
-  margin-top: 10px;
+#close-preview, #close-iframe {
+    margin-top: 10px;
 }
 
 .hidden {
-  display: none;
+    display: none;
 }
 
 #editor {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: black;
-  border: 2px solid limegreen;
-  padding: 10px;
-  z-index: 1000;
-  width: 80%;
-  height: 80%;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: black;
+    border: 2px solid limegreen;
+    padding: 10px;
+    z-index: 1000;
+    width: 80%;
+    height: 80%;
 }
 
 #editor-content {
-  width: 100%;
-  height: 90%;
-  background: black;
-  color: limegreen;
-  border: 1px solid limegreen;
-  font-family: monospace;
+    width: 100%;
+    height: 90%;
+    background: black;
+    color: limegreen;
+    border: 1px solid limegreen;
+    font-family: monospace;
 }
 
 #save-file, #close-editor {
-  margin-top: 10px;
+    margin-top: 10px;
 }
