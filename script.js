@@ -77,11 +77,8 @@ async function handleCommand(command) {
         case 'strings':
             response = await extractStrings(args[1]);
             break;
-        case 'nc':
-            response = await handleNcCommand(args.slice(1));
-            break;
-        case 'ssh':
-            response = await handleSshCommand(args.slice(1));
+        case 'preview':
+            response = await previewImage(args[1]);
             break;
         default:
             response = `Command not found: ${cmd}`;
@@ -179,102 +176,67 @@ async function readFile(fileName) {
     }
 }
 
-// Function to extract strings from a file
-async function extractStrings(fileName) {
+// Function to preview an image
+async function previewImage(fileName) {
     if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
     try {
         const fileHandle = await currentDirHandle.getFileHandle(fileName);
         const file = await fileHandle.getFile();
-        const content = await file.text();
-        const strings = content.match(/[^\x00-\x1F\x7F]+/g) || [];
-        return strings.join('\n');
+        const url = URL.createObjectURL(file);
+
+        // Display the image in an iframe or image element
+        const iframeContainer = document.getElementById('iframe-container');
+        const previewIframe = document.getElementById('preview-iframe');
+        previewIframe.src = url;
+        iframeContainer.classList.remove('hidden');
+
+        return `Previewing ${fileName}`;
     } catch (err) {
         return `Error: ${err.message}`;
     }
 }
 
-// Function to select a directory
-async function selectDirectory() {
-    try {
-        currentDirHandle = await window.showDirectoryPicker();
-        previousDirHandles = []; // Reset back history
-        refreshFileManager();
-    } catch (err) {
-        alert(`Error: ${err.message}`);
-    }
-}
-
-// Function to get file type icon
-function getFileIcon(name, kind) {
-    if (kind === 'directory') return '📁';
-    const ext = name.split('.').pop().toLowerCase();
-    const icons = {
-        'txt': '📝', 'md': '📖', 'html': '🌐', 'css': '🎨', 'js': '📜',
-        'py': '🐍', 'json': '🔢', 'jpg': '🖼️', 'png': '🖼️', 'gif': '🎞️',
-        'zip': '📦', 'rar': '📦', 'tar': '📦', 'mp4': '🎥', 'mp3': '🎵'
-    };
-    return icons[ext] || '📄';
-}
-
-// Function to refresh file manager
+// Function to refresh the file manager
 async function refreshFileManager() {
     const fileManagerContent = document.getElementById('file-manager-content');
-    const currentDirDisplay = document.getElementById('current-directory');
     fileManagerContent.innerHTML = '';
 
     if (!currentDirHandle) {
-        fileManagerContent.textContent = 'No directory selected. Click "Select Directory" to choose a folder.';
+        fileManagerContent.textContent = 'No directory selected. Use `cd` to select a directory.';
         return;
     }
 
-    // Update current directory display
-    currentDirDisplay.textContent = `Current Directory: ${currentDirHandle.name}`;
-
-    let folders = [];
-    let files = [];
-    let hiddenFiles = [];
-
+    // Display files and folders
     for await (const entry of currentDirHandle.values()) {
-        if (entry.kind === 'directory') {
-            folders.push(entry);
-        } else if (entry.name.startsWith('.')) {
-            hiddenFiles.push(entry);
-        } else {
-            files.push(entry);
-        }
-    }
-
-    // Sort alphabetically
-    folders.sort((a, b) => a.name.localeCompare(b.name));
-    files.sort((a, b) => a.name.localeCompare(b.name));
-    hiddenFiles.sort((a, b) => a.name.localeCompare(b.name));
-
-    const sortedEntries = [...folders, ...files, ...hiddenFiles];
-
-    sortedEntries.forEach(entry => {
         const item = document.createElement('div');
         item.className = 'file-manager-item';
-        item.innerHTML = `<span class='file-icon' style='font-size: 25px; margin-right: 25px;'>${getFileIcon(entry.name, entry.kind)}</span> ${entry.name}`;
-        
-        if (entry.kind === 'directory') {
-            item.addEventListener('dblclick', async () => {
+
+        const icon = document.createElement('i');
+        icon.className = entry.kind === 'directory' ? 'fas fa-folder folder-icon' : 'fas fa-file file-icon';
+        item.appendChild(icon);
+
+        const name = document.createElement('span');
+        name.textContent = entry.name;
+        item.appendChild(name);
+
+        // Add double-click event to open files and folders
+        item.addEventListener('dblclick', async () => {
+            if (entry.kind === 'directory') {
                 previousDirHandles.push(currentDirHandle);
                 currentDirHandle = await currentDirHandle.getDirectoryHandle(entry.name);
+                currentDirPath = entry.name;
                 refreshFileManager();
-            });
-        }
-        fileManagerContent.appendChild(item);
-    });
-}
+            } else {
+                const fileHandle = await currentDirHandle.getFileHandle(entry.name);
+                const file = await fileHandle.getFile();
+                const content = await file.text();
+                document.getElementById('editor-content').value = content;
+                document.getElementById('editor').classList.remove('hidden');
+            }
+        });
 
-// Function to go back in directory
-async function goBack() {
-    if (previousDirHandles.length > 0) {
-        currentDirHandle = previousDirHandles.pop();
-        refreshFileManager();
-    } else {
-        alert('Already at the root directory.');
-    } 
+        fileManagerContent.appendChild(item);
+    }
 }
 
 // Add event listeners
@@ -285,8 +247,30 @@ document.getElementById('input').addEventListener('keydown', function (event) {
     }
 });
 
-document.getElementById('select-directory').addEventListener('click', selectDirectory);
+document.getElementById('select-directory').addEventListener('click', async () => {
+    try {
+        currentDirHandle = await window.showDirectoryPicker();
+        currentDirPath = currentDirHandle.name;
+        refreshFileManager();
+    } catch (err) {
+        alert(`Error: ${err.message}`);
+    }
+});
 
-document.getElementById('back-button').addEventListener('click', goBack);
+document.getElementById('back-button').addEventListener('click', async () => {
+    if (previousDirHandles.length > 0) {
+        currentDirHandle = previousDirHandles.pop();
+        currentDirPath = currentDirHandle.name;
+        refreshFileManager();
+    } else {
+        alert('Already at the root directory.');
+    }
+});
 
 document.getElementById('refresh-file-manager').addEventListener('click', refreshFileManager);
+
+// Add event listener to close the preview
+document.getElementById('close-iframe').addEventListener('click', () => {
+    document.getElementById('iframe-container').classList.add('hidden');
+    document.getElementById('preview-iframe').src = '';
+});
