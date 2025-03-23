@@ -17,6 +17,7 @@ if (!('showDirectoryPicker' in window)) {
 }
 
 // Function to dynamically load commands from the 'commands/' folder
+// Function to dynamically load commands from the 'commands/' folder
 async function loadCommands() {
     try {
         // Fetch the list of files in the 'commands/' folder
@@ -48,6 +49,7 @@ async function loadCommands() {
 // Load all commands when the script starts
 loadCommands();
 
+// Function to handle terminal commands
 // Function to handle terminal commands
 async function handleCommand(command) {
     const output = document.getElementById('output');
