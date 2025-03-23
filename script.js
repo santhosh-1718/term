@@ -185,16 +185,78 @@ async function extractMetadata(fileName) {
     try {
         const fileHandle = await currentDirHandle.getFileHandle(fileName);
         const file = await fileHandle.getFile();
-        const metadata = {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            lastModified: new Date(file.lastModified).toLocaleString(),
-        };
-        return JSON.stringify(metadata, null, 2);
+        const arrayBuffer = await file.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+
+        // Parse PNG metadata
+        if (file.type === 'image/png') {
+            const metadata = parsePNGMetadata(uint8Array);
+            return formatMetadataOutput(file, metadata);
+        } else {
+            return 'Metadata extraction is currently supported only for PNG files.';
+        }
     } catch (err) {
         return `Error: ${err.message}`;
     }
+}
+
+// Function to parse PNG metadata
+function parsePNGMetadata(uint8Array) {
+    const metadata = {};
+
+    // PNG signature (first 8 bytes)
+    const pngSignature = [137, 80, 78, 71, 13, 10, 26, 10];
+    for (let i = 0; i < 8; i++) {
+        if (uint8Array[i] !== pngSignature[i]) {
+            throw new Error('Invalid PNG file.');
+        }
+    }
+
+    // Parse IHDR chunk (contains width, height, bit depth, etc.)
+    const ihdrChunkOffset = 8;
+    const chunkLength = (uint8Array[ihdrChunkOffset] << 24) | (uint8Array[ihdrChunkOffset + 1] << 16) | (uint8Array[ihdrChunkOffset + 2] << 8) | uint8Array[ihdrChunkOffset + 3];
+    const chunkType = String.fromCharCode(...uint8Array.slice(ihdrChunkOffset + 4, ihdrChunkOffset + 8));
+
+    if (chunkType !== 'IHDR') {
+        throw new Error('IHDR chunk not found.');
+    }
+
+    // Extract width, height, bit depth, color type, compression, filter, and interlace
+    metadata.width = (uint8Array[ihdrChunkOffset + 8] << 24) | (uint8Array[ihdrChunkOffset + 9] << 16) | (uint8Array[ihdrChunkOffset + 10] << 8) | uint8Array[ihdrChunkOffset + 11];
+    metadata.height = (uint8Array[ihdrChunkOffset + 12] << 24) | (uint8Array[ihdrChunkOffset + 13] << 16) | (uint8Array[ihdrChunkOffset + 14] << 8) | uint8Array[ihdrChunkOffset + 15];
+    metadata.bitDepth = uint8Array[ihdrChunkOffset + 16];
+    metadata.colorType = uint8Array[ihdrChunkOffset + 17];
+    metadata.compression = uint8Array[ihdrChunkOffset + 18];
+    metadata.filter = uint8Array[ihdrChunkOffset + 19];
+    metadata.interlace = uint8Array[ihdrChunkOffset + 20];
+
+    return metadata;
+}
+
+// Function to format metadata output
+function formatMetadataOutput(file, metadata) {
+    return `
+ExifTool Version Number         : 1.0
+File Name                       : ${file.name}
+Directory                       : .
+File Size                       : ${file.size} bytes
+File Modification Date/Time     : ${new Date(file.lastModified).toLocaleString()}
+File Access Date/Time           : ${new Date().toLocaleString()}
+File Inode Change Date/Time     : ${new Date().toLocaleString()}
+File Permissions                : -rw-r--r--
+File Type                       : PNG
+File Type Extension             : png
+MIME Type                       : ${file.type}
+Image Width                     : ${metadata.width}
+Image Height                    : ${metadata.height}
+Bit Depth                       : ${metadata.bitDepth}
+Color Type                      : ${metadata.colorType}
+Compression                     : ${metadata.compression === 0 ? 'Deflate/Inflate' : 'Unknown'}
+Filter                          : ${metadata.filter === 0 ? 'Adaptive' : 'Unknown'}
+Interlace                       : ${metadata.interlace === 0 ? 'Noninterlaced' : 'Interlaced'}
+Image Size                      : ${metadata.width}x${metadata.height}
+Megapixels                      : ${(metadata.width * metadata.height / 1000000).toFixed(3)}
+`;
 }
 
 // Function to extract strings from a file
