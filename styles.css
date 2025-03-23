@@ -10,6 +10,7 @@ body {
   justify-content: center;
   align-items: center;
 }
+
 #terminal {
   width: 95%;
   height: 45%;
@@ -61,12 +62,12 @@ body {
 }
 
 #file-manager-content {
-  white-space: pre-wrap;
   display: flex;
   flex-wrap: wrap;
+  gap: 5px; /* 5px spacing between items */
 }
 
-#refresh-file-manager, #back-button {
+#select-directory, #refresh-file-manager, #back-button {
   background-color: limegreen;
   color: black;
   border: none;
@@ -74,7 +75,7 @@ body {
   cursor: pointer;
 }
 
-#refresh-file-manager:hover, #back-button:hover {
+#select-directory:hover, #refresh-file-manager:hover, #back-button:hover {
   background-color: green;
 }
 
@@ -83,10 +84,9 @@ body {
   padding: 5px;
   display: flex;
   align-items: center;
-  width: 120px;
-  margin: 5px;
-  text-align: center;
   flex-direction: column;
+  width: 100px; /* Fixed width for each item */
+  text-align: center;
 }
 
 .file-manager-item:hover {
@@ -95,7 +95,16 @@ body {
 }
 
 .file-icon {
-  font-size: 48px;
+  font-size: 24px; /* Icon size */
+  margin-bottom: 5px;
+}
+
+.folder-icon {
+  color: #ffcc00; /* Yellow color for folders */
+}
+
+.file-icon {
+  color: #00ccff; /* Blue color for files */
 }
 
 #image-preview {
