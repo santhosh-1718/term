@@ -1,14 +1,4 @@
-let currentDir = '~';
-let fileSystem = {
-    '~': {
-        'Documents': {
-            'file1.txt': 'This is file1 content',
-            'file2.txt': 'This is file2 content'
-        },
-        'Downloads': {},
-        'Pictures': {}
-    }
-};
+let currentDirHandle;
 
 // Function to handle terminal commands
 async function handleCommand(command) {
@@ -18,7 +8,7 @@ async function handleCommand(command) {
     if (command.trim() === '') return;
 
     // Display the command in the terminal
-    output.innerHTML += `<div><span id="prompt">user@website:${currentDir}$</span> ${command}</div>`;
+    output.innerHTML += `<div><span id="prompt">user@local:~$</span> ${command}</div>`;
 
     if (command === 'clear') {
         output.innerHTML = '';
@@ -29,41 +19,24 @@ async function handleCommand(command) {
     const args = command.split(' ');
     const cmd = args[0];
 
-    let response = { output: '', currentDir: currentDir, files: [] };
+    let response = '';
 
     switch (cmd) {
         case 'ls':
-            response.output = listFiles(currentDir);
-            response.files = getFiles(currentDir);
+            response = await listFiles();
             break;
         case 'cd':
-            response.output = changeDirectory(args[1]);
-            response.currentDir = currentDir;
-            response.files = getFiles(currentDir);
-            break;
-        case 'mkdir':
-            response.output = makeDirectory(args[1]);
-            response.files = getFiles(currentDir);
-            break;
-        case 'touch':
-            response.output = createFile(args[1]);
-            response.files = getFiles(currentDir);
+            response = await changeDirectory(args[1]);
             break;
         case 'cat':
-            response.output = readFile(args[1]);
+            response = await readFile(args[1]);
             break;
         default:
-            response.output = `Command not found: ${cmd}`;
+            response = `Command not found: ${cmd}`;
     }
 
     // Display the output
-    output.innerHTML += `<div>${response.output}</div>`;
-
-    // Update the current directory for the prompt
-    currentDir = response.currentDir;
-
-    // Refresh the file manager
-    refreshFileManager(response.files);
+    output.innerHTML += `<div>${response}</div>`;
 
     // Clear the input and scroll to the bottom
     input.value = '';
@@ -71,77 +44,53 @@ async function handleCommand(command) {
 }
 
 // Function to list files in the current directory
-function listFiles(dir) {
-    const files = getFiles(dir);
+async function listFiles() {
+    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
+    const files = [];
+    for await (const entry of currentDirHandle.values()) {
+        files.push(entry.name);
+    }
     return files.join('\n');
 }
 
 // Function to change directory
-function changeDirectory(dir) {
+async function changeDirectory(dir) {
+    if (!currentDirHandle) {
+        // Request permission to access the directory
+        try {
+            currentDirHandle = await window.showDirectoryPicker();
+            return '';
+        } catch (err) {
+            return `Error: ${err.message}`;
+        }
+    }
+
     if (dir === '..') {
-        const parts = currentDir.split('/');
-        parts.pop();
-        currentDir = parts.join('/') || '~';
-    } else if (dir in fileSystem[currentDir]) {
-        currentDir = `${currentDir}/${dir}`;
-    } else {
-        return `cd: no such file or directory: ${dir}`;
-    }
-    return '';
-}
-
-// Function to create a directory
-function makeDirectory(dir) {
-    if (!fileSystem[currentDir][dir]) {
-        fileSystem[currentDir][dir] = {};
+        // Move to the parent directory
+        currentDirHandle = await currentDirHandle.getParent();
         return '';
-    } else {
-        return `mkdir: cannot create directory '${dir}': File exists`;
     }
-}
 
-// Function to create a file
-function createFile(file) {
-    if (!fileSystem[currentDir][file]) {
-        fileSystem[currentDir][file] = '';
+    // Move to a subdirectory
+    try {
+        const newDirHandle = await currentDirHandle.getDirectoryHandle(dir);
+        currentDirHandle = newDirHandle;
         return '';
-    } else {
-        return `touch: cannot create file '${file}': File exists`;
+    } catch (err) {
+        return `Error: ${err.message}`;
     }
 }
 
 // Function to read a file
-function readFile(file) {
-    if (fileSystem[currentDir][file] !== undefined) {
-        return fileSystem[currentDir][file];
-    } else {
-        return `cat: ${file}: No such file or directory`;
+async function readFile(fileName) {
+    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
+    try {
+        const fileHandle = await currentDirHandle.getFileHandle(fileName);
+        const file = await fileHandle.getFile();
+        return await file.text();
+    } catch (err) {
+        return `Error: ${err.message}`;
     }
-}
-
-// Function to get files in the current directory
-function getFiles(dir) {
-    return Object.keys(fileSystem[dir] || {});
-}
-
-// Function to refresh the file manager
-function refreshFileManager(files) {
-    const fileManagerContent = document.getElementById('file-manager-content');
-    fileManagerContent.innerHTML = '';
-
-    // Display the current directory
-    const currentDirElement = document.createElement('div');
-    currentDirElement.textContent = `Current Directory: ${currentDir}`;
-    currentDirElement.style.fontWeight = 'bold';
-    fileManagerContent.appendChild(currentDirElement);
-
-    // Display files and folders
-    files.forEach(file => {
-        const item = document.createElement('div');
-        item.className = 'file-manager-item';
-        item.textContent = file;
-        fileManagerContent.appendChild(item);
-    });
 }
 
 // Add event listener for terminal input
@@ -153,4 +102,26 @@ document.getElementById('input').addEventListener('keydown', function (event) {
 });
 
 // Initialize file manager
-refreshFileManager(getFiles(currentDir));
+document.getElementById('refresh-file-manager').addEventListener('click', async () => {
+    const fileManagerContent = document.getElementById('file-manager-content');
+    fileManagerContent.innerHTML = '';
+
+    if (!currentDirHandle) {
+        fileManagerContent.textContent = 'No directory selected. Use `cd` to select a directory.';
+        return;
+    }
+
+    // Display the current directory
+    const currentDirElement = document.createElement('div');
+    currentDirElement.textContent = `Current Directory: ${currentDirHandle.name}`;
+    currentDirElement.style.fontWeight = 'bold';
+    fileManagerContent.appendChild(currentDirElement);
+
+    // Display files and folders
+    for await (const entry of currentDirHandle.values()) {
+        const item = document.createElement('div');
+        item.className = 'file-manager-item';
+        item.textContent = entry.name;
+        fileManagerContent.appendChild(item);
+    }
+});
