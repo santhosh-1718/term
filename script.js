@@ -1,5 +1,6 @@
 let currentDirHandle;
 let currentDirPath = '~';
+let previousDirHandles = []; // Stack to track previous directories
 
 // Check if the browser supports the File System Access API
 if (!('showDirectoryPicker' in window)) {
@@ -71,284 +72,10 @@ async function handleCommand(command) {
             response = await downloadFile(args[1]);
             break;
         case 'nc':
-        case 'netcat':
-            response = 'Netcat is not supported in this terminal.';
+            response = await handleNcCommand(args.slice(1));
             break;
         case 'ssh':
-            response = 'SSH is not supported in this terminal.';
-            break;
-        case 'ping':
-            response = 'Ping is not supported in this terminal.';
-            break;
-        case 'ifconfig':
-            response = 'Ifconfig is not supported in this terminal.';
-            break;
-        case 'curl':
-            response = await curlFile(args[1]);
-            break;
-        case 'grep':
-            response = await grepFile(args[1], args[2]);
-            break;
-        case 'find':
-            response = await findFile(args[1]);
-            break;
-        case 'chmod':
-            response = await changePermissions(args[1], args[2]);
-            break;
-        case 'chown':
-            response = 'Chown is not supported in this terminal.';
-            break;
-        case 'ps':
-            response = 'Ps is not supported in this terminal.';
-            break;
-        case 'kill':
-            response = 'Kill is not supported in this terminal.';
-            break;
-        case 'top':
-            response = 'Top is not supported in this terminal.';
-            break;
-        case 'tar':
-            response = 'Tar is not supported in this terminal.';
-            break;
-        case 'gzip':
-            response = 'Gzip is not supported in this terminal.';
-            break;
-        case 'unzip':
-            response = 'Unzip is not supported in this terminal.';
-            break;
-        case 'df':
-            response = 'Df is not supported in this terminal.';
-            break;
-        case 'du':
-            response = 'Du is not supported in this terminal.';
-            break;
-        case 'ln':
-            response = 'Ln is not supported in this terminal.';
-            break;
-        case 'diff':
-            response = await diffFiles(args[1], args[2]);
-            break;
-        case 'echo':
-            response = args.slice(1).join(' ');
-            break;
-        case 'whoami':
-            response = 'user';
-            break;
-        case 'pwd':
-            response = currentDirPath;
-            break;
-        case 'date':
-            response = new Date().toString();
-            break;
-        case 'cal':
-            response = 'Cal is not supported in this terminal.';
-            break;
-        case 'uptime':
-            response = 'Uptime is not supported in this terminal.';
-            break;
-        case 'uname':
-            response = 'Uname is not supported in this terminal.';
-            break;
-        case 'history':
-            response = 'History is not supported in this terminal.';
-            break;
-        case 'man':
-            response = 'Man is not supported in this terminal.';
-            break;
-        case 'which':
-            response = 'Which is not supported in this terminal.';
-            break;
-        case 'whereis':
-            response = 'Whereis is not supported in this terminal.';
-            break;
-        case 'locate':
-            response = 'Locate is not supported in this terminal.';
-            break;
-        case 'tail':
-            response = await tailFile(args[1]);
-            break;
-        case 'head':
-            response = await headFile(args[1]);
-            break;
-        case 'less':
-            response = 'Less is not supported in this terminal.';
-            break;
-        case 'more':
-            response = 'More is not supported in this terminal.';
-            break;
-        case 'sort':
-            response = await sortFile(args[1]);
-            break;
-        case 'uniq':
-            response = await uniqFile(args[1]);
-            break;
-        case 'wc':
-            response = await wordCount(args[1]);
-            break;
-        case 'cut':
-            response = 'Cut is not supported in this terminal.';
-            break;
-        case 'tr':
-            response = 'Tr is not supported in this terminal.';
-            break;
-        case 'sed':
-            response = 'Sed is not supported in this terminal.';
-            break;
-        case 'awk':
-            response = 'Awk is not supported in this terminal.';
-            break;
-        case 'xargs':
-            response = 'Xargs is not supported in this terminal.';
-            break;
-        case 'tee':
-            response = 'Tee is not supported in this terminal.';
-            break;
-        case 'ssh-keygen':
-            response = 'Ssh-keygen is not supported in this terminal.';
-            break;
-        case 'scp':
-            response = 'Scp is not supported in this terminal.';
-            break;
-        case 'rsync':
-            response = 'Rsync is not supported in this terminal.';
-            break;
-        case 'ftp':
-            response = 'Ftp is not supported in this terminal.';
-            break;
-        case 'sftp':
-            response = 'Sftp is not supported in this terminal.';
-            break;
-        case 'telnet':
-            response = 'Telnet is not supported in this terminal.';
-            break;
-        case 'nslookup':
-            response = 'Nslookup is not supported in this terminal.';
-            break;
-        case 'dig':
-            response = 'Dig is not supported in this terminal.';
-            break;
-        case 'host':
-            response = 'Host is not supported in this terminal.';
-            break;
-        case 'traceroute':
-            response = 'Traceroute is not supported in this terminal.';
-            break;
-        case 'route':
-            response = 'Route is not supported in this terminal.';
-            break;
-        case 'netstat':
-            response = 'Netstat is not supported in this terminal.';
-            break;
-        case 'iptables':
-            response = 'Iptables is not supported in this terminal.';
-            break;
-        case 'crontab':
-            response = 'Crontab is not supported in this terminal.';
-            break;
-        case 'at':
-            response = 'At is not supported in this terminal.';
-            break;
-        case 'service':
-            response = 'Service is not supported in this terminal.';
-            break;
-        case 'systemctl':
-            response = 'Systemctl is not supported in this terminal.';
-            break;
-        case 'journalctl':
-            response = 'Journalctl is not supported in this terminal.';
-            break;
-        case 'useradd':
-            response = 'Useradd is not supported in this terminal.';
-            break;
-        case 'usermod':
-            response = 'Usermod is not supported in this terminal.';
-            break;
-        case 'userdel':
-            response = 'Userdel is not supported in this terminal.';
-            break;
-        case 'groupadd':
-            response = 'Groupadd is not supported in this terminal.';
-            break;
-        case 'groupmod':
-            response = 'Groupmod is not supported in this terminal.';
-            break;
-        case 'groupdel':
-            response = 'Groupdel is not supported in this terminal.';
-            break;
-        case 'passwd':
-            response = 'Passwd is not supported in this terminal.';
-            break;
-        case 'su':
-            response = 'Su is not supported in this terminal.';
-            break;
-        case 'sudo':
-            response = 'Sudo is not supported in this terminal.';
-            break;
-        case 'visudo':
-            response = 'Visudo is not supported in this terminal.';
-            break;
-        case 'id':
-            response = 'Id is not supported in this terminal.';
-            break;
-        case 'who':
-            response = 'Who is not supported in this terminal.';
-            break;
-        case 'w':
-            response = 'W is not supported in this terminal.';
-            break;
-        case 'last':
-            response = 'Last is not supported in this terminal.';
-            break;
-        case 'lastlog':
-            response = 'Lastlog is not supported in this terminal.';
-            break;
-        case 'dmesg':
-            response = 'Dmesg is not supported in this terminal.';
-            break;
-        case 'vmstat':
-            response = 'Vmstat is not supported in this terminal.';
-            break;
-        case 'iostat':
-            response = 'Iostat is not supported in this terminal.';
-            break;
-        case 'mpstat':
-            response = 'Mpstat is not supported in this terminal.';
-            break;
-        case 'sar':
-            response = 'Sar is not supported in this terminal.';
-            break;
-        case 'free':
-            response = 'Free is not supported in this terminal.';
-            break;
-        case 'uptime':
-            response = 'Uptime is not supported in this terminal.';
-            break;
-        case 'lsof':
-            response = 'Lsof is not supported in this terminal.';
-            break;
-        case 'fuser':
-            response = 'Fuser is not supported in this terminal.';
-            break;
-        case 'strace':
-            response = 'Strace is not supported in this terminal.';
-            break;
-        case 'ltrace':
-            response = 'Ltrace is not supported in this terminal.';
-            break;
-        case 'gdb':
-            response = 'Gdb is not supported in this terminal.';
-            break;
-        case 'ldd':
-            response = 'Ldd is not supported in this terminal.';
-            break;
-        case 'objdump':
-            response = 'Objdump is not supported in this terminal.';
-            break;
-        case 'nm':
-            response = 'Nm is not supported in this terminal.';
-            break;
-        case 'strings':
-            response = await stringsFile(args[1]);
+            response = await handleSshCommand(args.slice(1));
             break;
         default:
             response = `Command not found: ${cmd}`;
@@ -410,14 +137,19 @@ async function changeDirectory(dir) {
 
     if (dir === '..') {
         // Move to the parent directory
-        currentDirHandle = await currentDirHandle.getParent();
-        currentDirPath = currentDirHandle.name;
-        refreshFileManager();
-        return '';
+        if (previousDirHandles.length > 0) {
+            currentDirHandle = previousDirHandles.pop();
+            currentDirPath = currentDirHandle.name;
+            refreshFileManager();
+            return '';
+        } else {
+            return 'Already at the root directory.';
+        }
     }
 
     // Move to a subdirectory
     try {
+        previousDirHandles.push(currentDirHandle); // Save current directory
         const newDirHandle = await currentDirHandle.getDirectoryHandle(dir);
         currentDirHandle = newDirHandle;
         currentDirPath = dir;
@@ -548,15 +280,61 @@ async function downloadFile(url) {
     }
 }
 
-// Function to extract strings from a file
-async function stringsFile(fileName) {
-    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
+// Function to handle nc command
+async function handleNcCommand(args) {
+    const host = args[0] || 'localhost';
+    const port = args[1] || 8080;
+
     try {
-        const fileHandle = await currentDirHandle.getFileHandle(fileName);
-        const file = await fileHandle.getFile();
-        const content = await file.text();
-        const strings = content.match(/[^\x00-\x1F\x7F]+/g) || [];
-        return strings.join('\n');
+        const ws = new WebSocket(`ws://${host}:${port}`);
+
+        ws.onopen = () => {
+            return 'Connected to WebSocket server. Type your message.';
+        };
+
+        ws.onmessage = (event) => {
+            document.getElementById('output').innerHTML += `<div>${event.data}</div>`;
+        };
+
+        ws.onerror = (error) => {
+            return `WebSocket error: ${error.message}`;
+        };
+
+        ws.onclose = () => {
+            return 'WebSocket connection closed.';
+        };
+
+        return 'WebSocket connection initiated.';
+    } catch (err) {
+        return `Error: ${err.message}`;
+    }
+}
+
+// Function to handle ssh command
+async function handleSshCommand(args) {
+    const host = args[0] || 'localhost';
+    const port = args[1] || 8081;
+
+    try {
+        const ws = new WebSocket(`ws://${host}:${port}`);
+
+        ws.onopen = () => {
+            return 'Connected to SSH server. Type your command.';
+        };
+
+        ws.onmessage = (event) => {
+            document.getElementById('output').innerHTML += `<div>${event.data}</div>`;
+        };
+
+        ws.onerror = (error) => {
+            return `SSH WebSocket error: ${error.message}`;
+        };
+
+        ws.onclose = () => {
+            return 'SSH WebSocket connection closed.';
+        };
+
+        return 'SSH WebSocket connection initiated.';
     } catch (err) {
         return `Error: ${err.message}`;
     }
@@ -591,6 +369,22 @@ async function refreshFileManager() {
         name.textContent = entry.name;
         item.appendChild(name);
 
+        // Add double-click event to open files and folders
+        item.addEventListener('dblclick', async () => {
+            if (entry.kind === 'directory') {
+                previousDirHandles.push(currentDirHandle); // Save current directory
+                currentDirHandle = await currentDirHandle.getDirectoryHandle(entry.name);
+                currentDirPath = entry.name;
+                refreshFileManager();
+            } else {
+                const fileHandle = await currentDirHandle.getFileHandle(entry.name);
+                const file = await fileHandle.getFile();
+                const content = await file.text();
+                document.getElementById('editor-content').value = content;
+                document.getElementById('editor').classList.remove('hidden');
+            }
+        });
+
         fileManagerContent.appendChild(item);
     }
 }
@@ -611,6 +405,17 @@ document.getElementById('select-directory').addEventListener('click', async () =
         refreshFileManager();
     } catch (err) {
         alert(`Error: ${err.message}`);
+    }
+});
+
+// Add event listener for back button
+document.getElementById('back-button').addEventListener('click', async () => {
+    if (previousDirHandles.length > 0) {
+        currentDirHandle = previousDirHandles.pop();
+        currentDirPath = currentDirHandle.name;
+        refreshFileManager();
+    } else {
+        alert('Already at the root directory.');
     }
 });
 
