@@ -1,4 +1,20 @@
+let currentDirHandle;
+let currentDirPath = '~';
 const commands = {};
+
+// Check if the browser supports the File System Access API
+if (!('showDirectoryPicker' in window)) {
+    document.getElementById('output').innerHTML = `
+        <div style="color: red;">
+            Error: Your browser does not support the File System Access API.
+            Please use Google Chrome or Microsoft Edge to access this application.
+        </div>
+    `;
+    document.getElementById('input').disabled = true;
+    document.getElementById('select-directory').disabled = true;
+    document.getElementById('refresh-file-manager').disabled = true;
+    document.getElementById('back-button').disabled = true;
+}
 
 // Function to dynamically load commands from the 'commands/' folder
 async function loadCommands() {
@@ -57,7 +73,7 @@ async function handleCommand(command) {
     if (commands[cmd]) {
         try {
             // Execute the command with arguments (e.g., 'ls -al' -> args = ['-al'])
-            response = await commands[cmd](args.slice(1));
+            response = await commands[cmd](args.slice(1), currentDirHandle);
         } catch (err) {
             response = `Error executing command ${cmd}: ${err.message}`;
         }
@@ -73,10 +89,128 @@ async function handleCommand(command) {
     output.parentElement.scrollTop = output.parentElement.scrollHeight;
 }
 
+// Function to list files in the current directory
+async function listFiles() {
+    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
+    const files = [];
+    for await (const entry of currentDirHandle.values()) {
+        files.push(entry.name);
+    }
+    return files.join('\n');
+}
+
+// Function to change directory
+async function changeDirectory(dir) {
+    if (!currentDirHandle) {
+        // Request permission to access the directory
+        try {
+            currentDirHandle = await window.showDirectoryPicker();
+            currentDirPath = currentDirHandle.name;
+            refreshFileManager();
+            return '';
+        } catch (err) {
+            return `Error: ${err.message}`;
+        }
+    }
+
+    if (dir === '..') {
+        // Move to the parent directory
+        currentDirHandle = await currentDirHandle.getParent();
+        currentDirPath = currentDirHandle.name;
+        refreshFileManager();
+        return '';
+    }
+
+    // Move to a subdirectory
+    try {
+        const newDirHandle = await currentDirHandle.getDirectoryHandle(dir);
+        currentDirHandle = newDirHandle;
+        currentDirPath = dir;
+        refreshFileManager();
+        return '';
+    } catch (err) {
+        return `Error: ${err.message}`;
+    }
+}
+
+// Function to refresh the file manager
+async function refreshFileManager() {
+    const fileManagerContent = document.getElementById('file-manager-content');
+    fileManagerContent.innerHTML = '';
+
+    if (!currentDirHandle) {
+        fileManagerContent.textContent = 'No directory selected. Use `cd` to select a directory.';
+        return;
+    }
+
+    // Display the current directory
+    const currentDirElement = document.createElement('div');
+    currentDirElement.textContent = `Current Directory: ${currentDirPath}`;
+    currentDirElement.style.fontWeight = 'bold';
+    fileManagerContent.appendChild(currentDirElement);
+
+    // Display files and folders
+    for await (const entry of currentDirHandle.values()) {
+        const item = document.createElement('div');
+        item.className = 'file-manager-item';
+
+        const icon = document.createElement('i');
+        icon.className = entry.kind === 'directory' ? 'fas fa-folder folder-icon' : 'fas fa-file file-icon';
+        item.appendChild(icon);
+
+        const name = document.createElement('span');
+        name.textContent = entry.name;
+        item.appendChild(name);
+
+        fileManagerContent.appendChild(item);
+    }
+}
+
 // Add event listener for terminal input
 document.getElementById('input').addEventListener('keydown', function (event) {
     if (event.key === 'Enter') {
         const command = this.value.trim();
         handleCommand(command);
     }
+});
+
+// Add event listener for selecting directory
+document.getElementById('select-directory').addEventListener('click', async () => {
+    try {
+        currentDirHandle = await window.showDirectoryPicker();
+        currentDirPath = currentDirHandle.name;
+        refreshFileManager();
+    } catch (err) {
+        alert(`Error: ${err.message}`);
+    }
+});
+
+// Refresh file manager
+document.getElementById('refresh-file-manager').addEventListener('click', refreshFileManager);
+
+// Close image preview
+document.getElementById('close-preview').addEventListener('click', () => {
+    document.getElementById('image-preview').classList.add('hidden');
+});
+
+// Save file in editor
+document.getElementById('save-file').addEventListener('click', async () => {
+    const content = document.getElementById('editor-content').value;
+    const fileName = prompt('Enter file name:');
+    if (fileName) {
+        try {
+            const fileHandle = await currentDirHandle.getFileHandle(fileName, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(content);
+            await writable.close();
+            alert('File saved successfully!');
+        } catch (err) {
+            alert(`Error: ${err.message}`);
+        }
+    }
+});
+
+// Close editor
+document.getElementById('close-editor').addEventListener('click', () => {
+    document.getElementById('editor').classList.add('hidden');
 });
