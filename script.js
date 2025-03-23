@@ -1,6 +1,5 @@
 let currentDirHandle;
 let currentDirPath = '~';
-const commands = {};
 
 // Check if the browser supports the File System Access API
 if (!('showDirectoryPicker' in window)) {
@@ -16,40 +15,6 @@ if (!('showDirectoryPicker' in window)) {
     document.getElementById('back-button').disabled = true;
 }
 
-// Function to dynamically load commands from the 'commands/' folder
-// Function to dynamically load commands from the 'commands/' folder
-async function loadCommands() {
-    try {
-        // Fetch the list of files in the 'commands/' folder
-        const response = await fetch('/commands/');
-        const text = await response.text();
-        const parser = new DOMParser();
-        const html = parser.parseFromString(text, 'text/html');
-
-        // Extract all .js files from the folder
-        const commandFiles = Array.from(html.querySelectorAll('a'))
-            .map(link => link.href)
-            .filter(href => href.endsWith('.js'))
-            .map(href => href.split('/').pop().replace('.js', ''));
-
-        // Load each command dynamically
-        for (const file of commandFiles) {
-            try {
-                const module = await import(`./commands/${file}.js`);
-                commands[file] = module.execute; // Store the execute function
-            } catch (err) {
-                console.error(`Failed to load command ${file}:`, err);
-            }
-        }
-    } catch (err) {
-        console.error('Failed to fetch commands:', err);
-    }
-}
-
-// Load all commands when the script starts
-loadCommands();
-
-// Function to handle terminal commands
 // Function to handle terminal commands
 async function handleCommand(command) {
     const output = document.getElementById('output');
@@ -67,20 +32,40 @@ async function handleCommand(command) {
     }
 
     const args = command.split(' ');
-    const cmd = args[0]; // Extract the command (e.g., 'ls')
+    const cmd = args[0];
 
     let response = '';
 
-    // Check if the command exists in the commands object
-    if (commands[cmd]) {
-        try {
-            // Execute the command with arguments (e.g., 'ls -al' -> args = ['-al'])
-            response = await commands[cmd](args.slice(1), currentDirHandle);
-        } catch (err) {
-            response = `Error executing command ${cmd}: ${err.message}`;
-        }
-    } else {
-        response = `Command not found: ${cmd}`;
+    switch (cmd) {
+        case 'ls':
+            response = await listFiles(args.slice(1));
+            break;
+        case 'cd':
+            response = await changeDirectory(args[1]);
+            break;
+        case 'cat':
+            response = await readFile(args[1]);
+            break;
+        case 'nano':
+            response = await openEditor(args[1]);
+            break;
+        case 'rm':
+            response = await removeFile(args[1]);
+            break;
+        case 'mv':
+            response = await moveFile(args[1], args[2]);
+            break;
+        case 'cp':
+            response = await copyFile(args[1], args[2]);
+            break;
+        case 'wget':
+            response = await downloadFile(args[1]);
+            break;
+        case 'python':
+            response = 'Python is not supported in this terminal.';
+            break;
+        default:
+            response = `Command not found: ${cmd}`;
     }
 
     // Display the output
@@ -91,14 +76,36 @@ async function handleCommand(command) {
     output.parentElement.scrollTop = output.parentElement.scrollHeight;
 }
 
-// Function to list files in the current directory
-async function listFiles() {
+// Function to list files in the current directory with options
+async function listFiles(args = []) {
     if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
+
     const files = [];
     for await (const entry of currentDirHandle.values()) {
-        files.push(entry.name);
+        files.push(entry);
     }
-    return files.join('\n');
+
+    let output = '';
+
+    // Handle options
+    if (args.includes('-a') || args.includes('--all')) {
+        // Show all files, including hidden files
+        output = files.map(entry => entry.name).join('\n');
+    } else if (args.includes('-l')) {
+        // Long listing format
+        output = files.map(entry => {
+            const type = entry.kind === 'directory' ? 'd' : '-';
+            const permissions = 'rwxrwxrwx'; // Simplified permissions
+            const size = entry.kind === 'file' ? entry.size : 0;
+            const date = new Date().toLocaleString(); // Simplified date
+            return `${type}${permissions} 1 user user ${size} ${date} ${entry.name}`;
+        }).join('\n');
+    } else {
+        // Default listing (exclude hidden files)
+        output = files.filter(entry => !entry.name.startsWith('.')).map(entry => entry.name).join('\n');
+    }
+
+    return output;
 }
 
 // Function to change directory
@@ -130,6 +137,93 @@ async function changeDirectory(dir) {
         currentDirPath = dir;
         refreshFileManager();
         return '';
+    } catch (err) {
+        return `Error: ${err.message}`;
+    }
+}
+
+// Function to read a file
+async function readFile(fileName) {
+    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
+    try {
+        const fileHandle = await currentDirHandle.getFileHandle(fileName);
+        const file = await fileHandle.getFile();
+        return await file.text();
+    } catch (err) {
+        return `Error: ${err.message}`;
+    }
+}
+
+// Function to open a file in the editor
+async function openEditor(fileName) {
+    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
+    try {
+        const fileHandle = await currentDirHandle.getFileHandle(fileName);
+        const file = await fileHandle.getFile();
+        const content = await file.text();
+        document.getElementById('editor-content').value = content;
+        document.getElementById('editor').classList.remove('hidden');
+        return '';
+    } catch (err) {
+        return `Error: ${err.message}`;
+    }
+}
+
+// Function to remove a file
+async function removeFile(fileName) {
+    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
+    try {
+        await currentDirHandle.removeEntry(fileName);
+        return `File ${fileName} deleted successfully.`;
+    } catch (err) {
+        return `Error: ${err.message}`;
+    }
+}
+
+// Function to move a file
+async function moveFile(source, destination) {
+    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
+    try {
+        const sourceFile = await currentDirHandle.getFileHandle(source);
+        const destinationFile = await currentDirHandle.getFileHandle(destination, { create: true });
+        const writable = await destinationFile.createWritable();
+        const file = await sourceFile.getFile();
+        await writable.write(await file.text());
+        await writable.close();
+        await currentDirHandle.removeEntry(source);
+        return `File ${source} moved to ${destination} successfully.`;
+    } catch (err) {
+        return `Error: ${err.message}`;
+    }
+}
+
+// Function to copy a file
+async function copyFile(source, destination) {
+    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
+    try {
+        const sourceFile = await currentDirHandle.getFileHandle(source);
+        const destinationFile = await currentDirHandle.getFileHandle(destination, { create: true });
+        const writable = await destinationFile.createWritable();
+        const file = await sourceFile.getFile();
+        await writable.write(await file.text());
+        await writable.close();
+        return `File ${source} copied to ${destination} successfully.`;
+    } catch (err) {
+        return `Error: ${err.message}`;
+    }
+}
+
+// Function to download a file
+async function downloadFile(url) {
+    try {
+        const response = await fetch(url);
+        const content = await response.text();
+        const fileName = url.split('/').pop();
+        const fileHandle = await currentDirHandle.getFileHandle(fileName, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(content);
+        await writable.close();
+        return `File ${fileName} downloaded successfully.`;
     } catch (err) {
         return `Error: ${err.message}`;
     }
