@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Local Terminal with File Manager</title>
+    <title>Advanced Terminal with File Manager</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-
-    
 <body>
     <div id="terminal">
         <div id="output"></div>
@@ -18,11 +16,20 @@
     </div>
     <div id="file-manager">
         <div id="file-manager-header">
-            <span>Local File Manager</span>
+            <span>File Manager</span>
             <button id="refresh-file-manager">Refresh</button>
             <button id="back-button">Back</button>
         </div>
         <div id="file-manager-content"></div>
+    </div>
+    <div id="image-preview" class="hidden">
+        <img id="preview-image" src="" alt="Image Preview">
+        <button id="close-preview">Close</button>
+    </div>
+    <div id="editor" class="hidden">
+        <textarea id="editor-content"></textarea>
+        <button id="save-file">Save</button>
+        <button id="close-editor">Close</button>
     </div>
     <script src="script.js"></script>
 </body>
