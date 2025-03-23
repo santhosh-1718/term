@@ -71,6 +71,12 @@ async function handleCommand(command) {
         case 'wget':
             response = await downloadFile(args[1]);
             break;
+        case 'exiftool':
+            response = await extractMetadata(args[1]);
+            break;
+        case 'strings':
+            response = await extractStrings(args[1]);
+            break;
         case 'nc':
             response = await handleNcCommand(args.slice(1));
             break;
@@ -89,7 +95,7 @@ async function handleCommand(command) {
     output.parentElement.scrollTop = output.parentElement.scrollHeight;
 }
 
-// Function to list files in the current directory with options
+// Function to list files in the current directory
 async function listFiles(args = []) {
     if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
 
@@ -100,30 +106,25 @@ async function listFiles(args = []) {
 
     let output = '';
 
-    // Handle options
     if (args.includes('-a') || args.includes('--all')) {
-        // Show all files, including hidden files
         output = files.map(entry => entry.name).join('\n');
     } else if (args.includes('-l')) {
-        // Long listing format
         output = files.map(entry => {
             const type = entry.kind === 'directory' ? 'd' : '-';
             const permissions = 'rwxrwxrwx'; // Simplified permissions
             const size = entry.kind === 'file' ? entry.size : 0;
-            const date = new Date().toLocaleString(); // Simplified date
+            const date = new Date(entry.lastModified).toLocaleString(); // File modification date
             return `${type}${permissions} 1 user user ${size} ${date} ${entry.name}`;
         }).join('\n');
     } else if (args.includes('-al') || args.includes('-la')) {
-        // Long listing format with all files
         output = files.map(entry => {
             const type = entry.kind === 'directory' ? 'd' : '-';
             const permissions = 'rwxrwxrwx'; // Simplified permissions
             const size = entry.kind === 'file' ? entry.size : 0;
-            const date = new Date().toLocaleString(); // Simplified date
+            const date = new Date(entry.lastModified).toLocaleString(); // File modification date
             return `${type}${permissions} 1 user user ${size} ${date} ${entry.name}`;
         }).join('\n');
     } else {
-        // Default listing (exclude hidden files)
         output = files.filter(entry => !entry.name.startsWith('.')).map(entry => entry.name).join('\n');
     }
 
@@ -133,7 +134,6 @@ async function listFiles(args = []) {
 // Function to change directory
 async function changeDirectory(dir) {
     if (!currentDirHandle) {
-        // Request permission to access the directory
         try {
             currentDirHandle = await window.showDirectoryPicker();
             currentDirPath = currentDirHandle.name;
@@ -145,7 +145,6 @@ async function changeDirectory(dir) {
     }
 
     if (dir === '..') {
-        // Move to the parent directory
         if (previousDirHandles.length > 0) {
             currentDirHandle = previousDirHandles.pop();
             currentDirPath = currentDirHandle.name;
@@ -156,9 +155,8 @@ async function changeDirectory(dir) {
         }
     }
 
-    // Move to a subdirectory
     try {
-        previousDirHandles.push(currentDirHandle); // Save current directory
+        previousDirHandles.push(currentDirHandle);
         const newDirHandle = await currentDirHandle.getDirectoryHandle(dir);
         currentDirHandle = newDirHandle;
         currentDirPath = dir;
@@ -181,169 +179,33 @@ async function readFile(fileName) {
     }
 }
 
-// Function to open a file in the editor
-async function openEditor(fileName) {
+// Function to extract metadata using exiftool-like functionality
+async function extractMetadata(fileName) {
+    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
+    try {
+        const fileHandle = await currentDirHandle.getFileHandle(fileName);
+        const file = await fileHandle.getFile();
+        const metadata = {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            lastModified: new Date(file.lastModified).toLocaleString(),
+        };
+        return JSON.stringify(metadata, null, 2);
+    } catch (err) {
+        return `Error: ${err.message}`;
+    }
+}
+
+// Function to extract strings from a file
+async function extractStrings(fileName) {
     if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
     try {
         const fileHandle = await currentDirHandle.getFileHandle(fileName);
         const file = await fileHandle.getFile();
         const content = await file.text();
-        document.getElementById('editor-content').value = content;
-        document.getElementById('editor').classList.remove('hidden');
-        return '';
-    } catch (err) {
-        return `Error: ${err.message}`;
-    }
-}
-
-// Function to remove a file
-async function removeFile(fileName) {
-    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
-    try {
-        await currentDirHandle.removeEntry(fileName);
-        return `File ${fileName} deleted successfully.`;
-    } catch (err) {
-        return `Error: ${err.message}`;
-    }
-}
-
-// Function to move a file
-async function moveFile(source, destination) {
-    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
-    try {
-        const sourceFile = await currentDirHandle.getFileHandle(source);
-        const destinationFile = await currentDirHandle.getFileHandle(destination, { create: true });
-        const writable = await destinationFile.createWritable();
-        const file = await sourceFile.getFile();
-        await writable.write(await file.text());
-        await writable.close();
-        await currentDirHandle.removeEntry(source);
-        return `File ${source} moved to ${destination} successfully.`;
-    } catch (err) {
-        return `Error: ${err.message}`;
-    }
-}
-
-// Function to copy a file
-async function copyFile(source, destination) {
-    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
-    try {
-        const sourceFile = await currentDirHandle.getFileHandle(source);
-        const destinationFile = await currentDirHandle.getFileHandle(destination, { create: true });
-        const writable = await destinationFile.createWritable();
-        const file = await sourceFile.getFile();
-        await writable.write(await file.text());
-        await writable.close();
-        return `File ${source} copied to ${destination} successfully.`;
-    } catch (err) {
-        return `Error: ${err.message}`;
-    }
-}
-
-// Function to create a directory
-async function createDirectory(dirName) {
-    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
-    try {
-        await currentDirHandle.getDirectoryHandle(dirName, { create: true });
-        return `Directory ${dirName} created successfully.`;
-    } catch (err) {
-        return `Error: ${err.message}`;
-    }
-}
-
-// Function to remove a directory
-async function removeDirectory(dirName) {
-    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
-    try {
-        await currentDirHandle.removeEntry(dirName, { recursive: true });
-        return `Directory ${dirName} deleted successfully.`;
-    } catch (err) {
-        return `Error: ${err.message}`;
-    }
-}
-
-// Function to create a file
-async function createFile(fileName) {
-    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
-    try {
-        await currentDirHandle.getFileHandle(fileName, { create: true });
-        return `File ${fileName} created successfully.`;
-    } catch (err) {
-        return `Error: ${err.message}`;
-    }
-}
-
-// Function to download a file
-async function downloadFile(url) {
-    try {
-        const response = await fetch(url);
-        const content = await response.text();
-        const fileName = url.split('/').pop();
-        const fileHandle = await currentDirHandle.getFileHandle(fileName, { create: true });
-        const writable = await fileHandle.createWritable();
-        await writable.write(content);
-        await writable.close();
-        return `File ${fileName} downloaded successfully.`;
-    } catch (err) {
-        return `Error: ${err.message}`;
-    }
-}
-
-// Function to handle nc command
-async function handleNcCommand(args) {
-    const host = args[0] || 'localhost';
-    const port = args[1] || 8080;
-
-    try {
-        const ws = new WebSocket(`ws://${host}:${port}`);
-
-        ws.onopen = () => {
-            return 'Connected to WebSocket server. Type your message.';
-        };
-
-        ws.onmessage = (event) => {
-            document.getElementById('output').innerHTML += `<div>${event.data}</div>`;
-        };
-
-        ws.onerror = (error) => {
-            return `WebSocket error: ${error.message}`;
-        };
-
-        ws.onclose = () => {
-            return 'WebSocket connection closed.';
-        };
-
-        return 'WebSocket connection initiated.';
-    } catch (err) {
-        return `Error: ${err.message}`;
-    }
-}
-
-// Function to handle ssh command
-async function handleSshCommand(args) {
-    const host = args[0] || 'localhost';
-    const port = args[1] || 8081;
-
-    try {
-        const ws = new WebSocket(`ws://${host}:${port}`);
-
-        ws.onopen = () => {
-            return 'Connected to SSH server. Type your command.';
-        };
-
-        ws.onmessage = (event) => {
-            document.getElementById('output').innerHTML += `<div>${event.data}</div>`;
-        };
-
-        ws.onerror = (error) => {
-            return `SSH WebSocket error: ${error.message}`;
-        };
-
-        ws.onclose = () => {
-            return 'SSH WebSocket connection closed.';
-        };
-
-        return 'SSH WebSocket connection initiated.';
+        const strings = content.match(/[^\x00-\x1F\x7F]+/g) || [];
+        return strings.join('\n');
     } catch (err) {
         return `Error: ${err.message}`;
     }
@@ -381,7 +243,7 @@ async function refreshFileManager() {
         // Add double-click event to open files and folders
         item.addEventListener('dblclick', async () => {
             if (entry.kind === 'directory') {
-                previousDirHandles.push(currentDirHandle); // Save current directory
+                previousDirHandles.push(currentDirHandle);
                 currentDirHandle = await currentDirHandle.getDirectoryHandle(entry.name);
                 currentDirPath = entry.name;
                 refreshFileManager();
@@ -398,7 +260,7 @@ async function refreshFileManager() {
     }
 }
 
-// Add event listener for terminal input
+// Add event listeners
 document.getElementById('input').addEventListener('keydown', function (event) {
     if (event.key === 'Enter') {
         const command = this.value.trim();
@@ -406,7 +268,6 @@ document.getElementById('input').addEventListener('keydown', function (event) {
     }
 });
 
-// Add event listener for selecting directory
 document.getElementById('select-directory').addEventListener('click', async () => {
     try {
         currentDirHandle = await window.showDirectoryPicker();
@@ -417,7 +278,6 @@ document.getElementById('select-directory').addEventListener('click', async () =
     }
 });
 
-// Add event listener for back button
 document.getElementById('back-button').addEventListener('click', async () => {
     if (previousDirHandles.length > 0) {
         currentDirHandle = previousDirHandles.pop();
@@ -428,32 +288,4 @@ document.getElementById('back-button').addEventListener('click', async () => {
     }
 });
 
-// Refresh file manager
 document.getElementById('refresh-file-manager').addEventListener('click', refreshFileManager);
-
-// Close image preview
-document.getElementById('close-preview').addEventListener('click', () => {
-    document.getElementById('image-preview').classList.add('hidden');
-});
-
-// Save file in editor
-document.getElementById('save-file').addEventListener('click', async () => {
-    const content = document.getElementById('editor-content').value;
-    const fileName = prompt('Enter file name:');
-    if (fileName) {
-        try {
-            const fileHandle = await currentDirHandle.getFileHandle(fileName, { create: true });
-            const writable = await fileHandle.createWritable();
-            await writable.write(content);
-            await writable.close();
-            alert('File saved successfully!');
-        } catch (err) {
-            alert(`Error: ${err.message}`);
-        }
-    }
-});
-
-// Close editor
-document.getElementById('close-editor').addEventListener('click', () => {
-    document.getElementById('editor').classList.add('hidden');
-});
