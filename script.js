@@ -113,6 +113,15 @@ async function listFiles(args = []) {
             const date = new Date().toLocaleString(); // Simplified date
             return `${type}${permissions} 1 user user ${size} ${date} ${entry.name}`;
         }).join('\n');
+    } else if (args.includes('-al') || args.includes('-la')) {
+        // Long listing format with all files
+        output = files.map(entry => {
+            const type = entry.kind === 'directory' ? 'd' : '-';
+            const permissions = 'rwxrwxrwx'; // Simplified permissions
+            const size = entry.kind === 'file' ? entry.size : 0;
+            const date = new Date().toLocaleString(); // Simplified date
+            return `${type}${permissions} 1 user user ${size} ${date} ${entry.name}`;
+        }).join('\n');
     } else {
         // Default listing (exclude hidden files)
         output = files.filter(entry => !entry.name.startsWith('.')).map(entry => entry.name).join('\n');
