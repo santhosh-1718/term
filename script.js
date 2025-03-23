@@ -10,6 +10,7 @@ if (!('showDirectoryPicker' in window)) {
         </div>
     `;
     document.getElementById('input').disabled = true;
+    document.getElementById('select-directory').disabled = true;
     document.getElementById('refresh-file-manager').disabled = true;
     document.getElementById('back-button').disabled = true;
 }
@@ -80,6 +81,7 @@ async function changeDirectory(dir) {
         try {
             currentDirHandle = await window.showDirectoryPicker();
             currentDirPath = currentDirHandle.name;
+            refreshFileManager();
             return '';
         } catch (err) {
             return `Error: ${err.message}`;
@@ -90,6 +92,7 @@ async function changeDirectory(dir) {
         // Move to the parent directory
         currentDirHandle = await currentDirHandle.getParent();
         currentDirPath = currentDirHandle.name;
+        refreshFileManager();
         return '';
     }
 
@@ -98,6 +101,7 @@ async function changeDirectory(dir) {
         const newDirHandle = await currentDirHandle.getDirectoryHandle(dir);
         currentDirHandle = newDirHandle;
         currentDirPath = dir;
+        refreshFileManager();
         return '';
     } catch (err) {
         return `Error: ${err.message}`;
@@ -146,16 +150,8 @@ async function openEditor(fileName) {
     }
 }
 
-// Add event listener for terminal input
-document.getElementById('input').addEventListener('keydown', function (event) {
-    if (event.key === 'Enter') {
-        const command = this.value.trim();
-        handleCommand(command);
-    }
-});
-
-// Initialize file manager
-document.getElementById('refresh-file-manager').addEventListener('click', async () => {
+// Function to refresh the file manager
+async function refreshFileManager() {
     const fileManagerContent = document.getElementById('file-manager-content');
     fileManagerContent.innerHTML = '';
 
@@ -174,10 +170,40 @@ document.getElementById('refresh-file-manager').addEventListener('click', async 
     for await (const entry of currentDirHandle.values()) {
         const item = document.createElement('div');
         item.className = 'file-manager-item';
-        item.textContent = entry.name;
+
+        const icon = document.createElement('i');
+        icon.className = entry.kind === 'directory' ? 'fas fa-folder folder-icon' : 'fas fa-file file-icon';
+        item.appendChild(icon);
+
+        const name = document.createElement('span');
+        name.textContent = entry.name;
+        item.appendChild(name);
+
         fileManagerContent.appendChild(item);
     }
+}
+
+// Add event listener for terminal input
+document.getElementById('input').addEventListener('keydown', function (event) {
+    if (event.key === 'Enter') {
+        const command = this.value.trim();
+        handleCommand(command);
+    }
 });
+
+// Add event listener for selecting directory
+document.getElementById('select-directory').addEventListener('click', async () => {
+    try {
+        currentDirHandle = await window.showDirectoryPicker();
+        currentDirPath = currentDirHandle.name;
+        refreshFileManager();
+    } catch (err) {
+        alert(`Error: ${err.message}`);
+    }
+});
+
+// Refresh file manager
+document.getElementById('refresh-file-manager').addEventListener('click', refreshFileManager);
 
 // Close image preview
 document.getElementById('close-preview').addEventListener('click', () => {
