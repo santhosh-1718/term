@@ -2,6 +2,7 @@ let currentDirHandle;
 let currentDirPath = ['~'];
 let previousDirHandles = [];
 let previousDirPaths = [];
+let currentFileHandle = null;
 
 // Check for File System Access API support
 if (!('showDirectoryPicker' in window)) {
@@ -64,6 +65,10 @@ async function handleCommand(command) {
             case 'preview':
                 response = await previewFile(args[1]);
                 break;
+            case 'nano':
+            case 'edit':
+                response = await editFile(args[1]);
+                break;
             case 'pwd':
                 response = getCurrentPath();
                 break;
@@ -87,6 +92,10 @@ async function handleCommand(command) {
                 response = await copyFile(args[1], args[2]);
                 refreshFileManager();
                 break;
+            case 'wget':
+                response = await downloadFile(args[1]);
+                refreshFileManager();
+                break;
             case 'help':
                 response = getHelpText();
                 break;
@@ -97,8 +106,9 @@ async function handleCommand(command) {
         response = `Error: ${err.message}`;
     }
 
-    // Display the output
-    output.innerHTML += `<div>${response}</div>`;
+    // Display the output with proper line breaks
+    const formattedResponse = response.replace(/\n/g, '<br>');
+    output.innerHTML += `<div class="terminal-output">${formattedResponse}</div>`;
     input.value = '';
     output.scrollTop = output.scrollHeight;
 }
@@ -109,18 +119,58 @@ ls [options]       - List directory contents
 cd [directory]     - Change directory
 cat [file]         - Display file contents
 eog/preview [file] - Preview file (image, video, audio, text)
+nano/edit [file]   - Edit file in text editor
 pwd                - Print working directory
 mkdir [directory]  - Create directory
 touch [file]       - Create file
 rm [file]          - Remove file
 mv [src] [dest]    - Move/rename file
 cp [src] [dest]    - Copy file
+wget [url]         - Download file from URL
 clear              - Clear terminal
 help               - Show this help`;
 }
 
 function getCurrentPath() {
     return currentDirPath.join('/');
+}
+
+function getFileIconClass(filename) {
+    const extension = filename.split('.').pop().toLowerCase();
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'];
+    const executableExtensions = ['exe', 'sh', 'bat', 'py', 'js'];
+    const archiveExtensions = ['zip', 'rar', '7z', 'tar', 'gz'];
+    const codeExtensions = ['txt', 'html', 'css', 'js', 'py', 'php', 'json', 'xml'];
+
+    if (imageExtensions.includes(extension)) {
+        return 'image-icon';
+    } else if (executableExtensions.includes(extension)) {
+        return 'executable-icon';
+    } else if (archiveExtensions.includes(extension)) {
+        return 'archive-icon';
+    } else if (codeExtensions.includes(extension)) {
+        return 'code-icon';
+    }
+    return 'file-icon';
+}
+
+function getFileItemClass(filename) {
+    const extension = filename.split('.').pop().toLowerCase();
+    const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'];
+    const executableExtensions = ['exe', 'sh', 'bat', 'py', 'js'];
+    const archiveExtensions = ['zip', 'rar', '7z', 'tar', 'gz'];
+    const codeExtensions = ['txt', 'html', 'css', 'js', 'py', 'php', 'json', 'xml'];
+
+    if (imageExtensions.includes(extension)) {
+        return 'image-item';
+    } else if (executableExtensions.includes(extension)) {
+        return 'executable-item';
+    } else if (archiveExtensions.includes(extension)) {
+        return 'archive-item';
+    } else if (codeExtensions.includes(extension)) {
+        return 'code-item';
+    }
+    return 'file-item';
 }
 
 // Enhanced ls command with Python-like functionality
@@ -163,20 +213,26 @@ async function listFiles(args = []) {
                 const permissions = 'rwxrwxrwx'; // Simplified
                 const size = entry.kind === 'file' ? entry.size : 4096;
                 const date = entry.lastModified ? new Date(entry.lastModified).toLocaleString() : '';
-                const name = entry.kind === 'directory' ? `${entry.name}/` : entry.name;
+                const name = entry.kind === 'directory' ? 
+                    `<span class="directory-item">${entry.name}/</span>` : 
+                    `<span class="${getFileItemClass(entry.name)}">${entry.name}</span>`;
                 return `${type}${permissions} 1 user user ${size} ${date} ${name}`;
             })
-            .join('\n');
+            .join('<br>');
         
         // Add total blocks (simplified)
         if (allEntries.length > 0) {
             const totalBlocks = allEntries.reduce((sum, entry) => sum + (entry.kind === 'file' ? Math.ceil(entry.size / 512) : 8), 0);
-            output = `total ${totalBlocks}\n${output}`;
+            output = `total ${totalBlocks}<br>${output}`;
         }
     } else {
         output = allEntries
             .filter(entry => showAll || showAlmostAll || !entry.name.startsWith('.'))
-            .map(entry => entry.kind === 'directory' ? `${entry.name}/` : entry.name)
+            .map(entry => {
+                return entry.kind === 'directory' ? 
+                    `<span class="directory-item">${entry.name}/</span>` : 
+                    `<span class="${getFileItemClass(entry.name)}">${entry.name}</span>`;
+            })
             .join('  ');
     }
 
@@ -270,6 +326,35 @@ async function readFile(fileName) {
     }
 }
 
+async function editFile(fileName) {
+    if (!currentDirHandle) return 'No directory selected.';
+    try {
+        const fileHandle = await currentDirHandle.getFileHandle(fileName);
+        const file = await fileHandle.getFile();
+        const content = await file.text();
+        
+        document.getElementById('editor-content').value = content;
+        currentFileHandle = fileHandle;
+        document.getElementById('editor-container').style.display = 'block';
+        return `Editing ${fileName}`;
+    } catch (err) {
+        return `Error: ${err.message}`;
+    }
+}
+
+async function saveFile() {
+    if (!currentFileHandle) return;
+    
+    try {
+        const writable = await currentFileHandle.createWritable();
+        await writable.write(document.getElementById('editor-content').value);
+        await writable.close();
+        showSuccess(`File saved: ${currentFileHandle.name}`);
+    } catch (err) {
+        showError(`Error saving file: ${err.message}`);
+    }
+}
+
 async function createDirectory(dirName) {
     if (!currentDirHandle) return 'No directory selected.';
     try {
@@ -344,6 +429,25 @@ async function copyFile(src, dest) {
     }
 }
 
+async function downloadFile(url) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Failed to download: ${response.status}`);
+        
+        const fileName = url.split('/').pop() || 'download';
+        const blob = await response.blob();
+        
+        const fileHandle = await currentDirHandle.getFileHandle(fileName, { create: true });
+        const writable = await fileHandle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        
+        return `Downloaded ${fileName}`;
+    } catch (err) {
+        return `Error: ${err.message}`;
+    }
+}
+
 // Enhanced preview functionality
 async function previewFile(fileName) {
     if (!currentDirHandle) return 'No directory selected.';
@@ -406,7 +510,7 @@ async function refreshFileManager() {
         parentItem.className = 'file-manager-item';
         
         const parentIcon = document.createElement('i');
-        parentIcon.className = 'fas fa-level-up-alt file-icon';
+        parentIcon.className = 'fas fa-level-up-alt folder-icon';
         parentItem.appendChild(parentIcon);
         
         const parentName = document.createElement('span');
@@ -432,7 +536,11 @@ async function refreshFileManager() {
         item.className = 'file-manager-item';
         
         const icon = document.createElement('i');
-        icon.className = entry.kind === 'directory' ? 'fas fa-folder folder-icon' : 'fas fa-file file-icon';
+        if (entry.kind === 'directory') {
+            icon.className = 'fas fa-folder folder-icon';
+        } else {
+            icon.className = `fas fa-file ${getFileIconClass(entry.name)}`;
+        }
         item.appendChild(icon);
         
         const name = document.createElement('span');
@@ -456,6 +564,8 @@ async function refreshFileManager() {
                 currentDirPath.push(entry.name);
                 updatePathDisplay();
                 refreshFileManager();
+            } else {
+                await editFile(entry.name);
             }
         });
         
@@ -515,9 +625,18 @@ document.getElementById('close-preview').addEventListener('click', () => {
     });
 });
 
+document.getElementById('save-file').addEventListener('click', async () => {
+    await saveFile();
+});
+
+document.getElementById('close-editor').addEventListener('click', () => {
+    document.getElementById('editor-container').style.display = 'none';
+    currentFileHandle = null;
+});
+
 // Initialize with welcome message
 document.getElementById('output').innerHTML = `
-    <div>Welcome to the Web Terminal</div>
-    <div>Type 'help' for available commands</div>
-    <div>Use the 'Open Directory' button or 'cd' command to begin</div>
+    <div class="terminal-output">Welcome to the Web Terminal</div>
+    <div class="terminal-output">Type 'help' for available commands</div>
+    <div class="terminal-output">Use the 'Open Directory' button or 'cd' command to begin</div>
 `;
