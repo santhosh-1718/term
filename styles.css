@@ -70,8 +70,8 @@ body {
 }
 
 #file-manager-content {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     gap: 10px;
 }
 
@@ -96,7 +96,6 @@ body {
     display: flex;
     align-items: center;
     flex-direction: column;
-    width: 100px;
     text-align: center;
     word-break: break-all;
     color: #00ff00;
@@ -129,6 +128,14 @@ body {
 
 .text-icon {
     color: #ffffff;
+}
+
+.config-icon {
+    color: #55ffff;
+}
+
+.hidden-icon {
+    color: #555555;
 }
 
 #preview-container {
@@ -250,7 +257,7 @@ body {
 }
 
 .hidden {
-    color: #555;
+    color: #555555;
 }
 
 .file {
@@ -269,12 +276,27 @@ body {
     color: #ffffff;
 }
 
+.config {
+    color: #55ffff;
+}
+
 .error {
     color: #ff5555;
 }
 
 .success {
     color: #55ff55;
+}
+
+.ls-output {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.ls-item {
+    word-break: break-all;
 }
 
 /* Scrollbar styling */
