@@ -39,6 +39,7 @@ body {
     color: limegreen;
     outline: none;
     flex-grow: 1;
+    font-family: monospace;
 }
 
 #file-manager {
@@ -73,6 +74,7 @@ body {
     border: none;
     padding: 5px 10px;
     cursor: pointer;
+    font-family: monospace;
 }
 
 #select-directory:hover, #refresh-file-manager:hover, #back-button:hover {
@@ -87,6 +89,7 @@ body {
     flex-direction: column;
     width: 100px;
     text-align: center;
+    word-break: break-all;
 }
 
 .file-manager-item:hover {
@@ -107,7 +110,7 @@ body {
     color: #00ccff;
 }
 
-#iframe-container {
+#preview-container {
     position: fixed;
     top: 50%;
     left: 50%;
@@ -116,27 +119,62 @@ body {
     border: 2px solid limegreen;
     padding: 10px;
     z-index: 1000;
-}
-
-#iframe-container.hidden {
+    max-width: 90vw;
+    max-height: 90vh;
     display: none;
 }
 
-#preview-iframe {
-    width: 80vw;
-    height: 80vh;
-    border: none;
+#preview-content {
+    max-width: 80vw;
+    max-height: 80vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-#close-iframe {
+#preview-content img, #preview-content video {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#preview-content audio {
+    width: 300px;
+}
+
+#preview-text {
+    white-space: pre-wrap;
+    overflow: auto;
+    max-width: 80vw;
+    max-height: 80vh;
+}
+
+#close-preview {
     margin-top: 10px;
     background-color: limegreen;
     color: black;
     border: none;
     padding: 5px 10px;
     cursor: pointer;
+    width: 100%;
 }
 
-#close-iframe:hover {
+#close-preview:hover {
     background-color: green;
+}
+
+.path-display {
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.terminal-command {
+    color: cyan;
+}
+
+.terminal-error {
+    color: red;
+}
+
+.terminal-success {
+    color: lime;
 }
