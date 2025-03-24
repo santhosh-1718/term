@@ -7,9 +7,21 @@ let currentFileHandle = null;
 // Configuration
 const config = {
     username: 'isha',
-    groupname: 'isha',
+    groupname: 'users',
     uid: 1000,
-    gid: 1000
+    gid: 100
+};
+
+// File type categories
+const fileTypes = {
+    image: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'],
+    executable: ['sh', 'py', 'js', 'exe', 'bat', 'bin'],
+    archive: ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz'],
+    text: ['txt', 'md', 'log', 'conf', 'ini', 'csv'],
+    config: ['conf', 'cfg', 'ini', 'yml', 'yaml', 'json'],
+    document: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'],
+    audio: ['mp3', 'wav', 'ogg', 'flac'],
+    video: ['mp4', 'avi', 'mkv', 'mov', 'wmv']
 };
 
 // Check for File System Access API support
@@ -147,26 +159,23 @@ function getCurrentPath() {
 }
 
 function getPrompt() {
-    return `user@local:${getCurrentPath()}$`;
+    return `${config.username}@linux:${getCurrentPath()}$`;
 }
 
 function getFileClass(filename) {
     if (filename.startsWith('.')) return 'hidden';
     
     const ext = filename.split('.').pop().toLowerCase();
-    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'];
-    const executableExts = ['sh', 'py', 'js', 'exe', 'bat'];
-    const archiveExts = ['zip', 'rar', '7z', 'tar', 'gz', 'bz2'];
     
-    if (imageExts.includes(ext)) return 'image';
-    if (executableExts.includes(ext)) return 'executable';
-    if (archiveExts.includes(ext)) return 'archive';
+    for (const [type, exts] of Object.entries(fileTypes)) {
+        if (exts.includes(ext)) return type;
+    }
+    
     return 'file';
 }
 
 function getFileIconClass(filename) {
-    const cls = getFileClass(filename);
-    return `${cls}-icon`;
+    return `${getFileClass(filename)}-icon`;
 }
 
 function modeToString(mode) {
@@ -216,7 +225,13 @@ async function listFiles(args = []) {
 
     // Sort entries: directories first, then files, both alphabetically
     entries.sort((a, b) => {
-        if (a.kind === b.kind) return a.name.localeCompare(b.name);
+        if (a.kind === b.kind) {
+            // Sort hidden files after visible ones
+            if (a.name.startsWith('.') !== b.name.startsWith('.')) {
+                return a.name.startsWith('.') ? 1 : -1;
+            }
+            return a.name.localeCompare(b.name);
+        }
         return a.kind === 'directory' ? -1 : 1;
     });
 
@@ -266,11 +281,16 @@ async function listFiles(args = []) {
 
         return `total ${totalBlocks}\n${fileList.join('\n')}`;
     } else {
-        // Simple listing
-        return entries
-            .filter(entry => showAll || showAlmostAll || !entry.name.startsWith('.'))
-            .map(entry => `<span class="${getFileClass(entry.name)}">${entry.name}</span>`)
-            .join(' ');
+        // Simple listing - 5 columns
+        const visibleEntries = entries.filter(entry => showAll || showAlmostAll || !entry.name.startsWith('.'));
+        
+        let output = '<div class="ls-output">';
+        visibleEntries.forEach(entry => {
+            output += `<div class="ls-item ${getFileClass(entry.name)}">${entry.name}</div>`;
+        });
+        output += '</div>';
+        
+        return output;
     }
 }
 
@@ -521,20 +541,33 @@ async function refreshFileManager() {
         fileManagerContent.appendChild(parentItem);
     }
 
-    // Display files and folders
+    // Get all entries and sort them
+    const entries = [];
     for await (const entry of currentDirHandle.values()) {
-        // Skip hidden files unless specifically requested
-        if (entry.name.startsWith('.')) continue;
+        entries.push(entry);
+    }
 
+    // Sort entries: directories first, then files, both alphabetically
+    entries.sort((a, b) => {
+        if (a.kind === b.kind) {
+            // Sort hidden files after visible ones
+            if (a.name.startsWith('.') !== b.name.startsWith('.')) {
+                return a.name.startsWith('.') ? 1 : -1;
+            }
+            return a.name.localeCompare(b.name);
+        }
+        return a.kind === 'directory' ? -1 : 1;
+    });
+
+    // Display files and folders in 5-column grid
+    for (const entry of entries) {
         const item = document.createElement('div');
         item.className = 'file-manager-item';
         
         const icon = document.createElement('i');
-        if (entry.kind === 'directory') {
-            icon.className = 'fas fa-folder folder-icon';
-        } else {
-            icon.className = `fas fa-file ${getFileIconClass(entry.name)}`;
-        }
+        icon.className = entry.kind === 'directory' ? 
+            'fas fa-folder folder-icon' : 
+            `fas fa-file ${getFileIconClass(entry.name)}`;
         item.appendChild(icon);
         
         const name = document.createElement('span');
@@ -635,7 +668,7 @@ document.getElementById('close-editor').addEventListener('click', () => {
 
 // Initialize
 document.getElementById('output').innerHTML = `
-    <div class="output">Linux-style terminal emulator</div>
+    <div class="output">Linux terminal emulator</div>
     <div class="output">Type 'help' for available commands</div>
     <div class="output">Click 'Open Directory' or use 'cd' to begin</div>
 `;
