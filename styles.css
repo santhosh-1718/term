@@ -1,7 +1,7 @@
 body {
-    background-color: black;
-    color: limegreen;
-    font-family: monospace;
+    background-color: #121212;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
     margin: 0;
     padding: 0;
     height: 100vh;
@@ -14,45 +14,54 @@ body {
 #terminal {
     width: 95%;
     height: 45%;
-    border: 2px solid limegreen;
+    border: 1px solid #333;
     padding: 10px;
     box-sizing: border-box;
     overflow-y: auto;
+    background-color: #1e1e1e;
+    border-radius: 5px;
 }
 
 #output {
     white-space: pre-wrap;
+    line-height: 1.5;
+    font-size: 14px;
 }
 
 #input-line {
     display: flex;
+    align-items: center;
 }
 
 #prompt {
     margin-right: 5px;
-    color: white;
+    color: #4CAF50;
+    font-weight: bold;
 }
 
 #input {
     background: none;
     border: none;
-    color: limegreen;
+    color: #e0e0e0;
     outline: none;
     flex-grow: 1;
-    font-family: monospace;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    caret-color: #4CAF50;
 }
 
 #file-manager {
     width: 95%;
     height: 45%;
-    border: 2px solid limegreen;
+    border: 1px solid #333;
     padding: 10px;
     box-sizing: border-box;
     margin-top: 10px;
-    background-color: black;
-    color: limegreen;
-    font-family: monospace;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
     overflow-y: auto;
+    border-radius: 5px;
 }
 
 #file-manager-header {
@@ -60,41 +69,47 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #333;
 }
 
 #file-manager-content {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 10px;
 }
 
 #select-directory, #refresh-file-manager, #back-button {
-    background-color: limegreen;
-    color: black;
+    background-color: #333;
+    color: #e0e0e0;
     border: none;
     padding: 5px 10px;
     cursor: pointer;
-    font-family: monospace;
+    font-family: 'Courier New', monospace;
+    margin-left: 5px;
+    border-radius: 3px;
+    transition: background-color 0.2s;
 }
 
 #select-directory:hover, #refresh-file-manager:hover, #back-button:hover {
-    background-color: green;
+    background-color: #4CAF50;
 }
 
 .file-manager-item {
     cursor: pointer;
-    padding: 5px;
+    padding: 8px;
     display: flex;
     align-items: center;
     flex-direction: column;
     width: 100px;
     text-align: center;
     word-break: break-all;
+    border-radius: 5px;
+    transition: all 0.2s;
 }
 
 .file-manager-item:hover {
-    background-color: limegreen;
-    color: black;
+    background-color: #333;
 }
 
 .file-icon {
@@ -103,11 +118,27 @@ body {
 }
 
 .folder-icon {
-    color: #ffcc00;
+    color: #64B5F6;
 }
 
 .file-icon {
-    color: #00ccff;
+    color: #90A4AE;
+}
+
+.image-icon {
+    color: #FF7043;
+}
+
+.executable-icon {
+    color: #81C784;
+}
+
+.archive-icon {
+    color: #FFB74D;
+}
+
+.code-icon {
+    color: #BA68C8;
 }
 
 #preview-container {
@@ -115,26 +146,30 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: black;
-    border: 2px solid limegreen;
-    padding: 10px;
+    background: #1e1e1e;
+    border: 1px solid #333;
+    padding: 15px;
     z-index: 1000;
     max-width: 90vw;
     max-height: 90vh;
     display: none;
+    border-radius: 5px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
 #preview-content {
     max-width: 80vw;
-    max-height: 80vh;
+    max-height: 70vh;
     display: flex;
     justify-content: center;
     align-items: center;
+    overflow: auto;
 }
 
 #preview-content img, #preview-content video {
     max-width: 100%;
     max-height: 100%;
+    border-radius: 3px;
 }
 
 #preview-content audio {
@@ -145,36 +180,143 @@ body {
     white-space: pre-wrap;
     overflow: auto;
     max-width: 80vw;
-    max-height: 80vh;
+    max-height: 70vh;
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    padding: 10px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
 }
 
 #close-preview {
     margin-top: 10px;
-    background-color: limegreen;
-    color: black;
+    background-color: #333;
+    color: #e0e0e0;
     border: none;
-    padding: 5px 10px;
+    padding: 8px 15px;
     cursor: pointer;
     width: 100%;
+    border-radius: 3px;
+    transition: background-color 0.2s;
 }
 
 #close-preview:hover {
-    background-color: green;
+    background-color: #4CAF50;
 }
 
 .path-display {
     margin-bottom: 10px;
     font-weight: bold;
+    color: #64B5F6;
 }
 
 .terminal-command {
-    color: cyan;
+    color: #4CAF50;
+}
+
+.terminal-output {
+    color: #e0e0e0;
+    line-height: 1.5;
 }
 
 .terminal-error {
-    color: red;
+    color: #F44336;
 }
 
 .terminal-success {
-    color: lime;
+    color: #81C784;
+}
+
+.directory-item {
+    color: #64B5F6;
+}
+
+.file-item {
+    color: #90A4AE;
+}
+
+.image-item {
+    color: #FF7043;
+}
+
+.executable-item {
+    color: #81C784;
+}
+
+.archive-item {
+    color: #FFB74D;
+}
+
+.code-item {
+    color: #BA68C8;
+}
+
+#editor-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #1e1e1e;
+    border: 1px solid #333;
+    padding: 15px;
+    z-index: 1000;
+    width: 80vw;
+    height: 80vh;
+    display: none;
+    border-radius: 5px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+#editor-content {
+    width: 100%;
+    height: calc(100% - 50px);
+    background-color: #1e1e1e;
+    color: #e0e0e0;
+    border: 1px solid #333;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    resize: none;
+    outline: none;
+    border-radius: 3px;
+}
+
+.editor-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+    gap: 10px;
+}
+
+#save-file, #close-editor {
+    background-color: #333;
+    color: #e0e0e0;
+    border: none;
+    padding: 8px 15px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color 0.2s;
+}
+
+#save-file:hover, #close-editor:hover {
+    background-color: #4CAF50;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #4CAF50;
 }
