@@ -127,6 +127,10 @@ body {
     color: #ff00ff;
 }
 
+.text-icon {
+    color: #ffffff;
+}
+
 #preview-container {
     position: fixed;
     top: 50%;
@@ -236,25 +240,7 @@ body {
     color: #000;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #000;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #00ff00;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #00cc00;
-}
-
+/* Terminal output colors */
 .directory {
     color: #00a8ff;
 }
@@ -277,4 +263,35 @@ body {
 
 .archive {
     color: #ff00ff;
+}
+
+.text {
+    color: #ffffff;
+}
+
+.error {
+    color: #ff5555;
+}
+
+.success {
+    color: #55ff55;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #000;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #00ff00;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #00cc00;
 }
