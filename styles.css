@@ -1,31 +1,31 @@
 body {
-    background-color: #121212;
-    color: #e0e0e0;
+    background-color: #000;
+    color: #00ff00;
     font-family: 'Courier New', monospace;
     margin: 0;
-    padding: 0;
+    padding: 10px;
     height: 100vh;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    box-sizing: border-box;
 }
 
 #terminal {
-    width: 95%;
-    height: 45%;
-    border: 1px solid #333;
+    width: 100%;
+    height: 50vh;
+    border: 2px solid #00ff00;
     padding: 10px;
     box-sizing: border-box;
     overflow-y: auto;
-    background-color: #1e1e1e;
-    border-radius: 5px;
+    margin-bottom: 10px;
+    background-color: #000;
 }
 
 #output {
     white-space: pre-wrap;
-    line-height: 1.5;
+    line-height: 1.4;
     font-size: 14px;
+    color: #00ff00;
 }
 
 #input-line {
@@ -35,33 +35,29 @@ body {
 
 #prompt {
     margin-right: 5px;
-    color: #4CAF50;
+    color: #00ff00;
     font-weight: bold;
 }
 
 #input {
-    background: none;
+    background: transparent;
     border: none;
-    color: #e0e0e0;
+    color: #00ff00;
     outline: none;
     flex-grow: 1;
     font-family: 'Courier New', monospace;
     font-size: 14px;
-    caret-color: #4CAF50;
+    caret-color: #00ff00;
 }
 
 #file-manager {
-    width: 95%;
-    height: 45%;
-    border: 1px solid #333;
+    width: 100%;
+    height: 45vh;
+    border: 2px solid #00ff00;
     padding: 10px;
     box-sizing: border-box;
-    margin-top: 10px;
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-    font-family: 'Courier New', monospace;
+    background-color: #000;
     overflow-y: auto;
-    border-radius: 5px;
 }
 
 #file-manager-header {
@@ -70,7 +66,7 @@ body {
     align-items: center;
     margin-bottom: 10px;
     padding-bottom: 5px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid #00ff00;
 }
 
 #file-manager-content {
@@ -80,19 +76,18 @@ body {
 }
 
 #select-directory, #refresh-file-manager, #back-button {
-    background-color: #333;
-    color: #e0e0e0;
-    border: none;
+    background-color: #000;
+    color: #00ff00;
+    border: 1px solid #00ff00;
     padding: 5px 10px;
     cursor: pointer;
     font-family: 'Courier New', monospace;
     margin-left: 5px;
-    border-radius: 3px;
-    transition: background-color 0.2s;
 }
 
 #select-directory:hover, #refresh-file-manager:hover, #back-button:hover {
-    background-color: #4CAF50;
+    background-color: #00ff00;
+    color: #000;
 }
 
 .file-manager-item {
@@ -104,41 +99,32 @@ body {
     width: 100px;
     text-align: center;
     word-break: break-all;
-    border-radius: 5px;
-    transition: all 0.2s;
+    color: #00ff00;
 }
 
 .file-manager-item:hover {
-    background-color: #333;
-}
-
-.file-icon {
-    font-size: 24px;
-    margin-bottom: 5px;
+    background-color: #00ff00;
+    color: #000;
 }
 
 .folder-icon {
-    color: #64B5F6;
+    color: #00a8ff;
 }
 
 .file-icon {
-    color: #90A4AE;
-}
-
-.image-icon {
-    color: #FF7043;
+    color: #00ff00;
 }
 
 .executable-icon {
-    color: #81C784;
+    color: #ff5555;
+}
+
+.image-icon {
+    color: #ffaa00;
 }
 
 .archive-icon {
-    color: #FFB74D;
-}
-
-.code-icon {
-    color: #BA68C8;
+    color: #ff00ff;
 }
 
 #preview-container {
@@ -146,15 +132,13 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #1e1e1e;
-    border: 1px solid #333;
+    background: #000;
+    border: 2px solid #00ff00;
     padding: 15px;
     z-index: 1000;
     max-width: 90vw;
     max-height: 90vh;
     display: none;
-    border-radius: 5px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
 #preview-content {
@@ -169,7 +153,6 @@ body {
 #preview-content img, #preview-content video {
     max-width: 100%;
     max-height: 100%;
-    border-radius: 3px;
 }
 
 #preview-content audio {
@@ -181,74 +164,29 @@ body {
     overflow: auto;
     max-width: 80vw;
     max-height: 70vh;
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-    padding: 10px;
-    border-radius: 3px;
+    color: #00ff00;
     font-family: 'Courier New', monospace;
+    padding: 10px;
 }
 
 #close-preview {
     margin-top: 10px;
-    background-color: #333;
-    color: #e0e0e0;
-    border: none;
+    background-color: #000;
+    color: #00ff00;
+    border: 1px solid #00ff00;
     padding: 8px 15px;
     cursor: pointer;
     width: 100%;
-    border-radius: 3px;
-    transition: background-color 0.2s;
 }
 
 #close-preview:hover {
-    background-color: #4CAF50;
+    background-color: #00ff00;
+    color: #000;
 }
 
 .path-display {
-    margin-bottom: 10px;
+    color: #00ff00;
     font-weight: bold;
-    color: #64B5F6;
-}
-
-.terminal-command {
-    color: #4CAF50;
-}
-
-.terminal-output {
-    color: #e0e0e0;
-    line-height: 1.5;
-}
-
-.terminal-error {
-    color: #F44336;
-}
-
-.terminal-success {
-    color: #81C784;
-}
-
-.directory-item {
-    color: #64B5F6;
-}
-
-.file-item {
-    color: #90A4AE;
-}
-
-.image-item {
-    color: #FF7043;
-}
-
-.executable-item {
-    color: #81C784;
-}
-
-.archive-item {
-    color: #FFB74D;
-}
-
-.code-item {
-    color: #BA68C8;
 }
 
 #editor-container {
@@ -256,29 +194,26 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #1e1e1e;
-    border: 1px solid #333;
+    background: #000;
+    border: 2px solid #00ff00;
     padding: 15px;
     z-index: 1000;
     width: 80vw;
     height: 80vh;
     display: none;
-    border-radius: 5px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
 #editor-content {
     width: 100%;
     height: calc(100% - 50px);
-    background-color: #1e1e1e;
-    color: #e0e0e0;
-    border: 1px solid #333;
+    background-color: #000;
+    color: #00ff00;
+    border: 1px solid #00ff00;
     padding: 10px;
     font-family: 'Courier New', monospace;
     font-size: 14px;
     resize: none;
     outline: none;
-    border-radius: 3px;
 }
 
 .editor-buttons {
@@ -289,17 +224,16 @@ body {
 }
 
 #save-file, #close-editor {
-    background-color: #333;
-    color: #e0e0e0;
-    border: none;
+    background-color: #000;
+    color: #00ff00;
+    border: 1px solid #00ff00;
     padding: 8px 15px;
     cursor: pointer;
-    border-radius: 3px;
-    transition: background-color 0.2s;
 }
 
 #save-file:hover, #close-editor:hover {
-    background-color: #4CAF50;
+    background-color: #00ff00;
+    color: #000;
 }
 
 /* Scrollbar styling */
@@ -309,14 +243,38 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-    background: #1e1e1e;
+    background: #000;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #333;
+    background: #00ff00;
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #4CAF50;
+    background: #00cc00;
+}
+
+.directory {
+    color: #00a8ff;
+}
+
+.executable {
+    color: #ff5555;
+}
+
+.hidden {
+    color: #555;
+}
+
+.file {
+    color: #00ff00;
+}
+
+.image {
+    color: #ffaa00;
+}
+
+.archive {
+    color: #ff00ff;
 }
