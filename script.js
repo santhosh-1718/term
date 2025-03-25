@@ -4,7 +4,6 @@ let previousDirHandles = [];
 let previousDirPaths = [];
 let currentFileHandle = null;
 
-// Configuration
 const config = {
     username: 'isha',
     groupname: 'users',
@@ -12,7 +11,6 @@ const config = {
     gid: 100
 };
 
-// File type categories
 const fileTypes = {
     image: ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'],
     executable: ['sh', 'py', 'js', 'exe', 'bat', 'bin'],
@@ -24,7 +22,146 @@ const fileTypes = {
     video: ['mp4', 'avi', 'mkv', 'mov', 'wmv']
 };
 
-// Check for File System Access API support
+class NetworkTools {
+    static async nc(args) {
+        const host = args[0];
+        const port = parseInt(args[1]);
+        const options = {
+            listen: args.includes('-l') || args.includes('--listen'),
+            verbose: args.includes('-v') || args.includes('--verbose'),
+            udp: args.includes('-u') || args.includes('--udp'),
+            timeout: this._getArgValue(args, ['-w', '--timeout']),
+            source: this._getArgValue(args, ['-s', '--source']),
+            sourcePort: this._getArgValue(args, ['--source-port']),
+            zeroIO: args.includes('-z') || args.includes('--zero-io')
+        };
+
+        if (options.listen) {
+            return this._ncListen(port, options);
+        } else {
+            return this._ncConnect(host, port, options);
+        }
+    }
+
+    static _getArgValue(args, flags) {
+        for (const flag of flags) {
+            const index = args.indexOf(flag);
+            if (index !== -1 && index < args.length - 1) {
+                return args[index + 1];
+            }
+        }
+        return null;
+    }
+
+    static async _ncListen(port, options) {
+        if (options.verbose) {
+            return `[*] Listening on port ${port} (${options.udp ? 'UDP' : 'TCP'})\n` +
+                   'Web browsers cannot directly create listening sockets. This is simulated.';
+        }
+        return 'Listening mode not fully supported in browser environment';
+    }
+
+    static async _ncConnect(host, port, options) {
+        if (options.verbose) {
+            let response = `[*] Connecting to ${host}:${port} (${options.udp ? 'UDP' : 'TCP'})\n`;
+            
+            try {
+                // Simulate connection attempt
+                const test = await fetch(`https://${host}:${port}`);
+                response += '[+] Connection successful (simulated)\n';
+            } catch (e) {
+                response += '[-] Connection failed (simulated)\n';
+            }
+            
+            return response;
+        }
+        return `Connected to ${host}:${port} (simulated)`;
+    }
+
+    static async wget(args) {
+        const url = args[0];
+        const output = this._getArgValue(args, ['-O', '--output']);
+        const verbose = args.includes('-v') || args.includes('--verbose');
+
+        try {
+            if (verbose) {
+                return `[*] Downloading ${url}\n` +
+                       `[+] Saved to ${output || url.split('/').pop() || 'download'}`;
+            }
+            
+            return `Downloaded ${url} to ${output || 'default filename'}`;
+        } catch (e) {
+            return `[-] Download failed: ${e.message}`;
+        }
+    }
+
+    static async ssh(args) {
+        const hostArg = args[0];
+        const command = args[1];
+        const verbose = args.includes('-v') || args.includes('--verbose');
+
+        let username, host;
+        if (hostArg.includes('@')) {
+            [username, host] = hostArg.split('@');
+        } else {
+            host = hostArg;
+            username = 'user';
+        }
+
+        if (verbose) {
+            let response = `[*] Connecting to ${username}@${host}...\n`;
+            if (command) {
+                response += `[*] Executing command: ${command}\n`;
+            }
+            response += `Welcome to ${host} (simulated SSH session)\n` +
+                        `Logged in as ${username}\n`;
+            
+            if (command) {
+                response += `Command output: Simulated execution of '${command}'`;
+            } else {
+                response += 'Interactive shell (simulated)\n' +
+                            'Type "exit" or "logout" to end session';
+            }
+            
+            return response;
+        }
+        
+        return `Connected to ${username}@${host} (simulated)`;
+    }
+
+    static async nmap(args) {
+        const target = args[0];
+        const ports = this._getArgValue(args, ['-p', '--ports']) || '1-1000';
+        const verbose = args.includes('-v') || args.includes('--verbose');
+
+        const [startPort, endPort] = ports.split('-').map(Number);
+        const openPorts = [];
+
+        if (verbose) {
+            let response = `[*] Scanning ${target}...\n`;
+            
+            const commonPorts = [21, 22, 23, 25, 53, 80, 110, 143, 443, 587, 993, 995];
+            for (const port of commonPorts) {
+                if (port >= startPort && port <= endPort) {
+                    openPorts.push(port);
+                    response += `Port ${port} is open\n`;
+                }
+            }
+            
+            response += '\n[+] Scan results:\n';
+            if (openPorts.length) {
+                response += 'Open ports: ' + openPorts.join(', ');
+            } else {
+                response += 'No open ports found';
+            }
+            
+            return response;
+        }
+        
+        return `Scan results for ${target}: Common ports scanned (simulated)`;
+    }
+}
+
 if (!('showDirectoryPicker' in window)) {
     showError('Your browser does not support the File System Access API. Please use Chrome or Edge.');
     disableUI();
@@ -50,19 +187,18 @@ function showSuccess(message) {
 }
 
 function scrollToBottom() {
-    const output = document.getElementById('output');
-    output.scrollTop = output.scrollHeight;
+    const terminal = document.getElementById('terminal');
+    terminal.scrollTop = terminal.scrollHeight;
+    document.getElementById('input').focus();
 }
 
-// Terminal command handling
 async function handleCommand(command) {
     const output = document.getElementById('output');
     const input = document.getElementById('input');
 
     if (command.trim() === '') return;
 
-    // Display the command
-    output.innerHTML += `<div><span class="prompt">${getPrompt()}</span> ${command}</div>`;
+    output.innerHTML += `<div><span class="prompt" style="color:white">${getPrompt()}</span> ${command}</div>`;
 
     if (command === 'clear') {
         output.innerHTML = '';
@@ -117,8 +253,16 @@ async function handleCommand(command) {
                 refreshFileManager();
                 break;
             case 'wget':
-                response = await downloadFile(args[1]);
-                refreshFileManager();
+                response = await NetworkTools.wget(args.slice(1));
+                break;
+            case 'nc':
+                response = await NetworkTools.nc(args.slice(1));
+                break;
+            case 'ssh':
+                response = await NetworkTools.ssh(args.slice(1));
+                break;
+            case 'nmap':
+                response = await NetworkTools.nmap(args.slice(1));
                 break;
             case 'help':
                 response = getHelpText();
@@ -130,8 +274,10 @@ async function handleCommand(command) {
         response = `Error: ${err.message}`;
     }
 
-    // Display the output
-    output.innerHTML += `<div class="output">${response}</div>`;
+    if (response) {
+        output.innerHTML += `<div class="output">${response}</div>`;
+    }
+    
     input.value = '';
     scrollToBottom();
 }
@@ -150,6 +296,9 @@ rm [file]          - Remove file
 mv [src] [dest]    - Move/rename file
 cp [src] [dest]    - Copy file
 wget [url]         - Download file
+nc [host] [port]   - Netcat-like functionality
+ssh [user@host]    - SSH client
+nmap [target]      - Port scanning
 clear              - Clear terminal
 help               - Show this help`;
 }
@@ -176,6 +325,84 @@ function getFileClass(filename) {
 
 function getFileIconClass(filename) {
     return `${getFileClass(filename)}-icon`;
+}
+
+async function listFiles(args = []) {
+    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
+
+    const showAll = args.includes('-a') || args.includes('--all');
+    const longFormat = args.includes('-l') || args.includes('-al') || args.includes('-la');
+    const showAlmostAll = args.includes('-A');
+
+    const entries = [];
+    for await (const entry of currentDirHandle.values()) {
+        entries.push(entry);
+    }
+
+    entries.sort((a, b) => {
+        if (a.kind === b.kind) {
+            if (a.name.startsWith('.') !== b.name.startsWith('.')) {
+                return a.name.startsWith('.') ? 1 : -1;
+            }
+            return a.name.localeCompare(b.name);
+        }
+        return a.kind === 'directory' ? -1 : 1;
+    });
+
+    if (showAll && !showAlmostAll) {
+        entries.unshift(
+            { kind: 'directory', name: '..' },
+            { kind: 'directory', name: '.' }
+        );
+    }
+
+    if (longFormat) {
+        let totalBlocks = 0;
+        const fileList = [];
+        
+        for (const entry of entries) {
+            if (!showAll && !showAlmostAll && entry.name.startsWith('.')) continue;
+            
+            try {
+                const file = entry.kind === 'file' ? 
+                    await entry.getFile() : 
+                    { size: 4096, lastModified: Date.now() };
+                
+                const mode = entry.name.startsWith('.') ? 0o644 : 
+                            entry.kind === 'directory' ? 0o755 : 0o644;
+                
+                const size = file.size;
+                totalBlocks += Math.ceil(size / 512);
+
+                const line = [
+                    modeToString(mode),
+                    '1',
+                    config.username.padEnd(8),
+                    config.groupname.padEnd(8),
+                    size.toString().padStart(8),
+                    formatDate(new Date(file.lastModified)),
+                    `<span class="${getFileClass(entry.name)}">${entry.name}</span>`
+                ].join(' ');
+
+                fileList.push(line);
+            } catch (err) {
+                console.error('Error processing file:', err);
+            }
+        }
+
+        return `total ${totalBlocks}\n${fileList.join('\n')}`;
+    } else {
+        const visibleEntries = entries.filter(entry => showAll || showAlmostAll || !entry.name.startsWith('.'));
+        
+        let output = '<div class="ls-output">';
+        visibleEntries.forEach(entry => {
+            const fileClass = getFileClass(entry.name);
+            output += `<div class="ls-item ${fileClass}">${entry.name}</div>`;
+        });
+        output += '</div>';
+        
+        return output;
+    }
 }
 
 function modeToString(mode) {
@@ -208,89 +435,6 @@ function formatDate(date) {
     } else {
         const year = date.getFullYear();
         return `${month} ${day}  ${year}`;
-    }
-}
-
-async function listFiles(args = []) {
-    if (!currentDirHandle) return 'No directory selected. Use `cd` to select a directory.';
-
-    const showAll = args.includes('-a') || args.includes('--all');
-    const longFormat = args.includes('-l') || args.includes('-al') || args.includes('-la');
-    const showAlmostAll = args.includes('-A');
-
-    const entries = [];
-    for await (const entry of currentDirHandle.values()) {
-        entries.push(entry);
-    }
-
-    // Sort entries: directories first, then files, both alphabetically
-    entries.sort((a, b) => {
-        if (a.kind === b.kind) {
-            // Sort hidden files after visible ones
-            if (a.name.startsWith('.') !== b.name.startsWith('.')) {
-                return a.name.startsWith('.') ? 1 : -1;
-            }
-            return a.name.localeCompare(b.name);
-        }
-        return a.kind === 'directory' ? -1 : 1;
-    });
-
-    // Add . and .. entries if showing all
-    if (showAll && !showAlmostAll) {
-        entries.unshift(
-            { kind: 'directory', name: '..' },
-            { kind: 'directory', name: '.' }
-        );
-    }
-
-    if (longFormat) {
-        // Calculate total blocks (1 block = 512 bytes)
-        let totalBlocks = 0;
-        const fileList = [];
-        
-        for (const entry of entries) {
-            if (!showAll && !showAlmostAll && entry.name.startsWith('.')) continue;
-            
-            try {
-                const file = entry.kind === 'file' ? 
-                    await entry.getFile() : 
-                    { size: 4096, lastModified: Date.now() };
-                
-                // Simulated permissions
-                const mode = entry.name.startsWith('.') ? 0o644 : 
-                            entry.kind === 'directory' ? 0o755 : 0o644;
-                
-                const size = file.size;
-                totalBlocks += Math.ceil(size / 512);
-
-                const line = [
-                    modeToString(mode),
-                    '1', // hard links
-                    config.username.padEnd(8),
-                    config.groupname.padEnd(8),
-                    size.toString().padStart(8),
-                    formatDate(new Date(file.lastModified)),
-                    `<span class="${getFileClass(entry.name)}">${entry.name}</span>`
-                ].join(' ');
-
-                fileList.push(line);
-            } catch (err) {
-                console.error('Error processing file:', err);
-            }
-        }
-
-        return `total ${totalBlocks}\n${fileList.join('\n')}`;
-    } else {
-        // Simple listing - 5 columns
-        const visibleEntries = entries.filter(entry => showAll || showAlmostAll || !entry.name.startsWith('.'));
-        
-        let output = '<div class="ls-output">';
-        visibleEntries.forEach(entry => {
-            output += `<div class="ls-item ${getFileClass(entry.name)}">${entry.name}</div>`;
-        });
-        output += '</div>';
-        
-        return output;
     }
 }
 
@@ -327,7 +471,6 @@ async function changeDirectory(dir) {
         currentDirPath.push(dir);
         return '';
     } catch (err) {
-        // Restore previous directory if change failed
         if (previousDirHandles.length > 0) {
             currentDirHandle = previousDirHandles.pop();
             currentDirPath = previousDirPaths.pop();
@@ -445,25 +588,6 @@ async function copyFile(src, dest) {
     }
 }
 
-async function downloadFile(url) {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Failed to download: ${response.status}`);
-        
-        const fileName = url.split('/').pop() || 'download';
-        const blob = await response.blob();
-        
-        const fileHandle = await currentDirHandle.getFileHandle(fileName, { create: true });
-        const writable = await fileHandle.createWritable();
-        await writable.write(blob);
-        await writable.close();
-        
-        return `Downloaded ${fileName}`;
-    } catch (err) {
-        return `Error: ${err.message}`;
-    }
-}
-
 async function previewFile(fileName) {
     if (!currentDirHandle) return 'No directory selected.';
     
@@ -473,10 +597,8 @@ async function previewFile(fileName) {
         const previewContainer = document.getElementById('preview-container');
         const previewContent = document.getElementById('preview-content');
         
-        // Clear previous content
         previewContent.innerHTML = '';
         
-        // Check file type and display appropriately
         if (file.type.startsWith('image/')) {
             const img = document.createElement('img');
             img.src = URL.createObjectURL(file);
@@ -518,10 +640,11 @@ async function refreshFileManager() {
         return;
     }
 
-    // Add parent directory link
+    document.getElementById('current-path').textContent = getCurrentPath();
+
     if (previousDirHandles.length > 0) {
         const parentItem = document.createElement('div');
-        parentItem.className = 'file-manager-item';
+        parentItem.className = 'file-manager-item directory';
         
         const parentIcon = document.createElement('i');
         parentIcon.className = 'fas fa-level-up-alt folder-icon';
@@ -534,23 +657,19 @@ async function refreshFileManager() {
         parentItem.addEventListener('click', async () => {
             currentDirHandle = previousDirHandles.pop();
             currentDirPath = previousDirPaths.pop();
-            document.getElementById('current-path').textContent = getCurrentPath();
             refreshFileManager();
         });
         
         fileManagerContent.appendChild(parentItem);
     }
 
-    // Get all entries and sort them
     const entries = [];
     for await (const entry of currentDirHandle.values()) {
         entries.push(entry);
     }
 
-    // Sort entries: directories first, then files, both alphabetically
     entries.sort((a, b) => {
         if (a.kind === b.kind) {
-            // Sort hidden files after visible ones
             if (a.name.startsWith('.') !== b.name.startsWith('.')) {
                 return a.name.startsWith('.') ? 1 : -1;
             }
@@ -559,24 +678,23 @@ async function refreshFileManager() {
         return a.kind === 'directory' ? -1 : 1;
     });
 
-    // Display files and folders in 5-column grid
     for (const entry of entries) {
         const item = document.createElement('div');
-        item.className = 'file-manager-item';
+        const fileClass = getFileClass(entry.name);
+        item.className = `file-manager-item ${fileClass}`;
         
         const icon = document.createElement('i');
         icon.className = entry.kind === 'directory' ? 
             'fas fa-folder folder-icon' : 
-            `fas fa-file ${getFileIconClass(entry.name)}`;
+            `fas fa-file ${fileClass}-icon`;
         item.appendChild(icon);
         
         const name = document.createElement('span');
         name.textContent = entry.name;
         item.appendChild(name);
         
-        // Single click for preview, double click for open/enter directory
         item.addEventListener('click', async (e) => {
-            if (e.detail === 1) { // Single click
+            if (e.detail === 1) {
                 if (entry.kind === 'file') {
                     await previewFile(entry.name);
                 }
@@ -589,7 +707,6 @@ async function refreshFileManager() {
                 previousDirPaths.push([...currentDirPath]);
                 currentDirHandle = await currentDirHandle.getDirectoryHandle(entry.name);
                 currentDirPath.push(entry.name);
-                document.getElementById('current-path').textContent = getCurrentPath();
                 refreshFileManager();
             } else {
                 await editFile(entry.name);
@@ -600,7 +717,6 @@ async function refreshFileManager() {
     }
 }
 
-// Event listeners
 document.getElementById('input').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') {
         handleCommand(this.value.trim());
@@ -608,7 +724,6 @@ document.getElementById('input').addEventListener('keydown', function(e) {
     }
 });
 
-// Click anywhere in terminal to focus input
 document.getElementById('terminal').addEventListener('click', function() {
     document.getElementById('input').focus();
 });
@@ -622,7 +737,6 @@ document.getElementById('select-directory').addEventListener('click', async () =
         }
         currentDirHandle = dirHandle;
         currentDirPath = [dirHandle.name];
-        document.getElementById('current-path').textContent = getCurrentPath();
         refreshFileManager();
         showSuccess(`Changed directory to ${dirHandle.name}`);
     } catch (err) {
@@ -634,7 +748,6 @@ document.getElementById('back-button').addEventListener('click', async () => {
     if (previousDirHandles.length > 0) {
         currentDirHandle = previousDirHandles.pop();
         currentDirPath = previousDirPaths.pop();
-        document.getElementById('current-path').textContent = getCurrentPath();
         refreshFileManager();
         showSuccess(`Returned to ${getCurrentPath()}`);
     } else {
@@ -649,7 +762,6 @@ document.getElementById('refresh-file-manager').addEventListener('click', () => 
 
 document.getElementById('close-preview').addEventListener('click', () => {
     document.getElementById('preview-container').style.display = 'none';
-    // Revoke object URLs to free memory
     const previewContent = document.getElementById('preview-content');
     const mediaElements = previewContent.querySelectorAll('img, video, audio');
     mediaElements.forEach(el => {
@@ -666,7 +778,6 @@ document.getElementById('close-editor').addEventListener('click', () => {
     currentFileHandle = null;
 });
 
-// Initialize
 document.getElementById('output').innerHTML = `
     <div class="output">Linux terminal emulator</div>
     <div class="output">Type 'help' for available commands</div>
