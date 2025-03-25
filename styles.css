@@ -19,6 +19,7 @@ body {
     overflow-y: auto;
     margin-bottom: 10px;
     background-color: #000;
+    scroll-behavior: smooth;
 }
 
 #output {
@@ -31,11 +32,15 @@ body {
 #input-line {
     display: flex;
     align-items: center;
+    position: sticky;
+    bottom: 0;
+    background-color: #000;
+    padding: 5px 0;
 }
 
 #prompt {
     margin-right: 5px;
-    color: #00ff00;
+    color: white;
     font-weight: bold;
 }
 
@@ -70,9 +75,10 @@ body {
 }
 
 #file-manager-content {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    align-items: flex-start;
 }
 
 #select-directory, #refresh-file-manager, #back-button {
@@ -92,13 +98,13 @@ body {
 
 .file-manager-item {
     cursor: pointer;
-    padding: 8px;
+    padding: 8px 4px;
     display: flex;
     align-items: center;
     flex-direction: column;
+    width: 100px;
     text-align: center;
     word-break: break-all;
-    color: #00ff00;
 }
 
 .file-manager-item:hover {
@@ -106,36 +112,59 @@ body {
     color: #000;
 }
 
-.folder-icon {
+.file-manager-item:hover span {
+    color: #000 !important;
+}
+
+.directory, .directory-icon, .folder-icon {
     color: #00a8ff;
 }
 
-.file-icon {
-    color: #00ff00;
-}
-
-.executable-icon {
+.executable, .executable-icon {
     color: #ff5555;
 }
 
-.image-icon {
+.image, .image-icon {
     color: #ffaa00;
 }
 
-.archive-icon {
+.archive, .archive-icon {
     color: #ff00ff;
 }
 
-.text-icon {
+.text, .text-icon {
     color: #ffffff;
 }
 
-.config-icon {
+.config, .config-icon {
     color: #55ffff;
 }
 
-.hidden-icon {
+.hidden, .hidden-icon {
     color: #555555;
+}
+
+.document, .document-icon {
+    color: #ff55ff;
+}
+
+.audio, .audio-icon {
+    color: #55ff55;
+}
+
+.video, .video-icon {
+    color: #5555ff;
+}
+
+.file, .file-icon {
+    color: #00ff00;
+}
+
+.path-display {
+    color: #00a8ff;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
 }
 
 #preview-container {
@@ -195,11 +224,6 @@ body {
     color: #000;
 }
 
-.path-display {
-    color: #00ff00;
-    font-weight: bold;
-}
-
 #editor-container {
     position: fixed;
     top: 50%;
@@ -247,39 +271,6 @@ body {
     color: #000;
 }
 
-/* Terminal output colors */
-.directory {
-    color: #00a8ff;
-}
-
-.executable {
-    color: #ff5555;
-}
-
-.hidden {
-    color: #555555;
-}
-
-.file {
-    color: #00ff00;
-}
-
-.image {
-    color: #ffaa00;
-}
-
-.archive {
-    color: #ff00ff;
-}
-
-.text {
-    color: #ffffff;
-}
-
-.config {
-    color: #55ffff;
-}
-
 .error {
     color: #ff5555;
 }
@@ -290,16 +281,17 @@ body {
 
 .ls-output {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
     margin-bottom: 10px;
 }
 
 .ls-item {
+    padding: 0 4px;
     word-break: break-all;
+    text-align: left;
 }
 
-/* Scrollbar styling */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
